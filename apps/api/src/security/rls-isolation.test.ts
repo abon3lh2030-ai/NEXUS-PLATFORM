@@ -86,9 +86,9 @@ describe('migrations', () => {
   it('seed plans with trusted annual SAR prices', async () => {
     const r = await db.query<{ code: string; price_halalas: string | null }>('select code, price_halalas from subscription_plans order by sort_order');
     expect(r.rows.map((p) => [p.code, p.price_halalas === null ? null : Number(p.price_halalas)])).toEqual([
-      ['starter', 39900],
-      ['pro', 59900],
-      ['business', 99900],
+      ['starter', 99900],
+      ['pro', 199900],
+      ['business', 299900],
       ['enterprise', null],
     ]);
   });
@@ -244,15 +244,15 @@ describe('payment activation function', () => {
     const tx = async (amount: number) =>
       (await db.query<{ id: string }>(`insert into payment_transactions (organization_id, user_id, plan_code, amount_halalas) values ($1, $2, 'pro', $3) returning id`, [ORG_A, U.ownerA, amount])).rows[0]!.id;
 
-    const t1 = await tx(59900);
+    const t1 = await tx(199900);
     await expect(db.query(`select * from activate_paid_transaction($1, 'pay_1', 100, 'SAR', 'creditcard', '{}')`, [t1])).rejects.toThrow(/amount_mismatch/);
-    const first = await db.query<{ ends_at: string; status: string }>(`select * from activate_paid_transaction($1, 'pay_1', 59900, 'SAR', 'creditcard', '{}')`, [t1]);
+    const first = await db.query<{ ends_at: string; status: string }>(`select * from activate_paid_transaction($1, 'pay_1', 199900, 'SAR', 'creditcard', '{}')`, [t1]);
     expect(first.rows[0]!.status).toBe('active');
-    const replay = await db.query<{ ends_at: string }>(`select * from activate_paid_transaction($1, 'pay_1', 59900, 'SAR', 'creditcard', '{}')`, [t1]);
+    const replay = await db.query<{ ends_at: string }>(`select * from activate_paid_transaction($1, 'pay_1', 199900, 'SAR', 'creditcard', '{}')`, [t1]);
     expect(replay.rows[0]!.ends_at).toEqual(first.rows[0]!.ends_at);
 
-    const t2 = await tx(59900);
-    const renewed = await db.query<{ ends_at: string }>(`select * from activate_paid_transaction($1, 'pay_2', 59900, 'SAR', 'applepay', '{}')`, [t2]);
+    const t2 = await tx(199900);
+    const renewed = await db.query<{ ends_at: string }>(`select * from activate_paid_transaction($1, 'pay_2', 199900, 'SAR', 'applepay', '{}')`, [t2]);
     const firstEnd = new Date(first.rows[0]!.ends_at);
     const renewedEnd = new Date(renewed.rows[0]!.ends_at);
     const expected = new Date(firstEnd);

@@ -92,7 +92,7 @@ Capabilities are **detected**. Unavailable features are reported as "not connect
 ## Saudi company model, pricing & billing
 
 - **Registration:** only companies registered in Saudi Arabia may register, using the company's **official** data: legal name, 10-digit CR, official email and phone, and an optional PNG logo. The platform admin is emailed.
-- **Plans:** annual only. Starter 399 SAR, Pro 599 SAR (most popular), Business 999 SAR, Enterprise custom.
+- **Plans:** annual only. Starter 999 SAR, Pro 1,999 SAR (most popular), Business 2,999 SAR, Enterprise custom.
 - **Where prices live:** prices and entitlements live in the database (`subscription_plans`), not in the frontend.
 - **Moyasar:** Apple Pay and cards.
   1. The server fixes the amount.

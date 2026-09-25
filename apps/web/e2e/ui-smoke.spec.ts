@@ -3,9 +3,9 @@ import { expect, test, type Page } from '@playwright/test';
 const API = 'http://127.0.0.1:9';
 
 const plans = [
-  { code: 'starter', name_ar: 'المبتدئة', name_en: 'Starter', price_halalas: 39900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 1, entitlements: { human_members: 1, ai_employees: 3, ai_executions_per_year: 300, active_projects: 5, storage_bytes: 5368709120, max_file_size_bytes: 26214400, concurrent_ai_sessions: 1, computer_minutes_per_year: 600, features: ['basic_memory', 'basic_analytics'] } },
-  { code: 'pro', name_ar: 'الاحترافية', name_en: 'Pro', price_halalas: 59900, currency: 'SAR', billing_interval: 'yearly', is_popular: true, is_custom: false, sort_order: 2, entitlements: { human_members: 5, ai_employees: 10, ai_executions_per_year: 1500, active_projects: null, storage_bytes: 26843545600, max_file_size_bytes: 52428800, concurrent_ai_sessions: 3, computer_minutes_per_year: 3000, features: ['full_memory', 'knowledge', 'decisions', 'meetings', 'approvals', 'agent_orchestration', 'advanced_analytics'] } },
-  { code: 'business', name_ar: 'الأعمال', name_en: 'Business', price_halalas: 99900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 3, entitlements: { human_members: 15, ai_employees: 30, ai_executions_per_year: 5000, active_projects: null, storage_bytes: 107374182400, max_file_size_bytes: 104857600, concurrent_ai_sessions: 8, computer_minutes_per_year: 12000, features: ['full_memory', 'audit_logs'] } },
+  { code: 'starter', name_ar: 'المبتدئة', name_en: 'Starter', price_halalas: 99900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 1, entitlements: { human_members: 1, ai_employees: 3, ai_executions_per_year: 300, active_projects: 5, storage_bytes: 5368709120, max_file_size_bytes: 26214400, concurrent_ai_sessions: 1, computer_minutes_per_year: 600, features: ['basic_memory', 'basic_analytics'] } },
+  { code: 'pro', name_ar: 'الاحترافية', name_en: 'Pro', price_halalas: 199900, currency: 'SAR', billing_interval: 'yearly', is_popular: true, is_custom: false, sort_order: 2, entitlements: { human_members: 5, ai_employees: 10, ai_executions_per_year: 1500, active_projects: null, storage_bytes: 26843545600, max_file_size_bytes: 52428800, concurrent_ai_sessions: 3, computer_minutes_per_year: 3000, features: ['full_memory', 'knowledge', 'decisions', 'meetings', 'approvals', 'agent_orchestration', 'advanced_analytics'] } },
+  { code: 'business', name_ar: 'الأعمال', name_en: 'Business', price_halalas: 299900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 3, entitlements: { human_members: 15, ai_employees: 30, ai_executions_per_year: 5000, active_projects: null, storage_bytes: 107374182400, max_file_size_bytes: 104857600, concurrent_ai_sessions: 8, computer_minutes_per_year: 12000, features: ['full_memory', 'audit_logs'] } },
   { code: 'enterprise', name_ar: 'المؤسسات', name_en: 'Enterprise', price_halalas: null, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: true, sort_order: 4, entitlements: { human_members: null, ai_employees: null, ai_executions_per_year: null, active_projects: null, storage_bytes: null, max_file_size_bytes: 262144000, concurrent_ai_sessions: 20, computer_minutes_per_year: null, features: [] } },
 ];
 
@@ -46,9 +46,9 @@ test('pricing shows annual SAR plans from the API with the popular badge', async
   await page.goto('/pricing');
   await expect(page.getByText('الأكثر شعبية')).toBeVisible();
   const body = page.locator('main');
-  await expect(body).toContainText('399');
-  await expect(body).toContainText('599');
   await expect(body).toContainText('999');
+  await expect(body).toContainText('1,999');
+  await expect(body).toContainText('2,999');
   await expect(page.getByRole('link', { name: 'طلب باقة مخصصة' }).first()).toBeVisible();
 });
 
