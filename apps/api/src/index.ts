@@ -17,6 +17,19 @@ if (env.CRON_ENABLED) {
       });
     }, 60_000),
   );
+  // Retention & hygiene, hourly: expired meeting transcripts and abandoned uploads (> 3h in 'uploading').
+  const hygiene = async () => {
+    await services.db.from('meeting_transcripts').delete().lt('expires_at', new Date().toISOString());
+    const cutoff = new Date(Date.now() - 3 * 3600_000).toISOString();
+    const { data: stale } = await services.db.from('company_files').select('id, storage_key').eq('status', 'uploading').lt('created_at', cutoff).limit(500);
+    const rows = (stale ?? []) as Array<{ id: string; storage_key: string }>;
+    if (rows.length) {
+      await services.db.storage.from('company-files').remove(rows.map((r) => r.storage_key));
+      await services.db.from('company_files').update({ status: 'failed', failure_reason: 'upload_abandoned', deleted_at: new Date().toISOString() }).in('id', rows.map((r) => r.id));
+    }
+  };
+  timers.push(setInterval(() => void hygiene().catch((err: unknown) => app.log.error({ err }, 'hygiene_job_failed')), 60 * 60_000));
+
   // Subscription expiry bookkeeping + notices, hourly (access is already enforced per-request by timestamp).
   const expiry = () => void services.billing.runExpiryJob().catch((err: unknown) => app.log.error({ err }, 'expiry_job_failed'));
   expiry();

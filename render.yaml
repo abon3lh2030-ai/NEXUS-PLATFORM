@@ -1,0 +1,102 @@
+# Render Blueprint — NEXUS Platform (HTTPS is enforced by Render on all services)
+services:
+  - type: web
+    name: nexus-api
+    runtime: node
+    plan: starter
+    region: frankfurt
+    buildCommand: npm ci --include=dev && npm run build:api
+    startCommand: npm run start:api
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "24"
+      - key: HOST
+        value: 0.0.0.0
+      - key: AI_PROVIDER
+        value: anthropic
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: COMPUTER_PROVIDER
+        value: storage_workspace
+      - key: CALENDAR_PROVIDER
+        value: nexus
+      - key: MEETING_PROVIDER
+        value: nexus
+      - key: VOICE_PROVIDER
+        value: none
+      - key: PLATFORM_ADMIN_NOTIFICATION_EMAIL
+        value: abdullahfah2030@hotmail.com
+      - key: PLATFORM_COMMERCIAL_REGISTRATION
+        value: "7055047331"
+      # Secrets / environment-specific values — set in the Render dashboard (never committed):
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: PUBLIC_APP_URL
+        sync: false
+      - key: API_BASE_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: AUTH_REDIRECT_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: MOYASAR_PUBLISHABLE_KEY
+        sync: false
+      - key: MOYASAR_SECRET_KEY
+        sync: false
+      - key: MOYASAR_WEBHOOK_SECRET
+        sync: false
+
+  - type: web
+    name: nexus-web
+    runtime: static
+    buildCommand: npm ci --include=dev && npm run build:web
+    staticPublishPath: apps/web/dist
+    autoDeploy: true
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=(), payment=(self "https://api.moyasar.com")
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_PUBLIC_APP_URL
+        sync: false
