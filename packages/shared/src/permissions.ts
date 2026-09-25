@@ -137,6 +137,21 @@ export const AI_PERMISSIONS = [
   'web.research',
   'computer.browser',
   'computer.terminal',
+  // Digital office — communications (spec names in comments)
+  'presentations.create', // can_create_presentations
+  'presentations.publish', // can_publish_presentations
+  'email.read', // can_read_email
+  'email.draft', // can_draft_email
+  'email.send', // can_send_email / can_reply_email / can_forward_email
+  'email.send_external', // can_send_external_email
+  'email.attach_files', // can_attach_company_files
+  'calendar.view', // can_view_calendar
+  'meetings.create', // can_create_meetings
+  'meetings.join', // can_join_meetings
+  'meetings.speak', // can_speak_in_meetings
+  'meetings.present', // can_present_in_meetings
+  'meetings.create_tasks', // can_create_tasks_from_meetings
+  'followups.send', // can_send_followups
 ] as const;
 export type AiPermission = (typeof AI_PERMISSIONS)[number];
 
@@ -147,4 +162,8 @@ export const DEFAULT_AI_PERMISSIONS: readonly AiPermission[] = [
   'tasks.update_own',
   'memory.read',
   'files.own.modify',
+  'presentations.create',
+  'email.read',
+  'email.draft',
+  'calendar.view',
 ];

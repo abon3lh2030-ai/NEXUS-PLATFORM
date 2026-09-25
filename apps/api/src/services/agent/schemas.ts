@@ -24,6 +24,14 @@ export const agentStepSchema = z.object({
     url: z.string().nullable(),
     command: z.string().nullable(),
     summary: z.string().nullable(),
+    email_id: z.string().nullable(),
+    to: z.string().nullable().describe('Comma-separated email addresses'),
+    attachment_ids: z.string().nullable().describe('Comma-separated file ids'),
+    meeting_id: z.string().nullable(),
+    starts_at: z.string().nullable().describe('ISO 8601 date-time'),
+    ends_at: z.string().nullable().describe('ISO 8601 date-time'),
+    duration_minutes: z.number().nullable(),
+    language: z.string().nullable(),
   }),
 });
 export type AgentStep = z.infer<typeof agentStepSchema>;
@@ -53,6 +61,16 @@ export const TOOL_ARG_SCHEMAS = {
   publish_file_to_shared: z.object({ file_id: id }),
   browser_action: z.object({ url: z.url({ protocol: /^https$/ }) }),
   terminal_command: z.object({ command: str(1000) }),
+  create_presentation: z.object({ title: str(200), content: str(8000), language: z.enum(['ar', 'en']).optional() }),
+  list_emails: z.object({ query: str(200).optional() }),
+  read_email: z.object({ email_id: id }),
+  draft_email: z.object({ to: str(2000), title: str(300), body: str(50_000), attachment_ids: z.string().max(400).optional(), email_id: id.optional() }),
+  send_email: z.object({ email_id: id }),
+  list_calendar: z.object({ starts_at: z.iso.datetime({ offset: true }).optional(), ends_at: z.iso.datetime({ offset: true }).optional() }),
+  find_free_time: z.object({ starts_at: z.iso.datetime({ offset: true }), ends_at: z.iso.datetime({ offset: true }), duration_minutes: z.number().int().min(15).max(480), to: z.string().max(2000).optional() }),
+  schedule_meeting: z.object({ title: str(200), starts_at: z.iso.datetime({ offset: true }), duration_minutes: z.number().int().min(15).max(480), to: z.string().max(2000).optional(), body: z.string().max(8000).optional() }),
+  join_meeting: z.object({ meeting_id: id }),
+  process_meeting: z.object({ meeting_id: id }),
   finish: z.object({ summary: str(8000), title: str(300).optional(), content: z.string().max(300_000).optional() }),
 } as const;
 

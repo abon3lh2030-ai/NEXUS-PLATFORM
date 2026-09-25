@@ -13,6 +13,7 @@ import { meRoutes } from './routes/me.js';
 import { organizationRoutes } from './routes/organization.js';
 import { publicRoutes } from './routes/public.js';
 import { workRoutes } from './routes/work.js';
+import { officeRoutes } from './routes/office.js';
 import { createServices, type Services } from './services/container.js';
 
 export async function buildApp(env: Env, overrides: Parameters<typeof createServices>[2] = {}): Promise<{ app: FastifyInstance; services: Services }> {
@@ -77,6 +78,7 @@ export async function buildApp(env: Env, overrides: Parameters<typeof createServ
   await app.register(async (scope) => aiRoutes(scope, services));
   await app.register(async (scope) => governanceRoutes(scope, services));
   await app.register(async (scope) => billingRoutes(scope, services));
+  await app.register(async (scope) => officeRoutes(scope, services));
   await app.register(async (scope) => adminRoutes(scope, services));
 
   return { app, services };

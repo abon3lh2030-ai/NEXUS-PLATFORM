@@ -3,11 +3,16 @@ import type { Db } from '../../lib/supabase.js';
 import type { FastifyBaseLogger } from 'fastify';
 
 export interface EmailMessage {
-  to: string;
+  to: string | string[];
+  cc?: string[];
   subject: string;
   html: string;
   text: string;
   template: string;
+  /** Sender identity override (e.g. an AI employee mailbox on a verified domain). */
+  from?: string;
+  replyTo?: string;
+  attachments?: Array<{ filename: string; contentBase64: string }>;
 }
 
 export interface EmailSendResult {
@@ -18,12 +23,15 @@ export interface EmailSendResult {
 
 export interface EmailProvider {
   readonly name: string;
+  /** customFrom: can send as AI employee mailboxes on a verified domain. */
+  readonly capabilities: { send: boolean; customFrom: boolean; attachments: boolean };
   send(message: EmailMessage): Promise<EmailSendResult>;
 }
 
 /** Resend (https://resend.com) REST provider. */
 export class ResendEmailProvider implements EmailProvider {
   readonly name = 'resend';
+  readonly capabilities = { send: true, customFrom: true, attachments: true };
   constructor(
     private readonly apiKey: string,
     private readonly from: string,
@@ -33,7 +41,16 @@ export class ResendEmailProvider implements EmailProvider {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: this.from, to: [message.to], subject: message.subject, html: message.html, text: message.text }),
+      body: JSON.stringify({
+        from: message.from ?? this.from,
+        to: Array.isArray(message.to) ? message.to : [message.to],
+        ...(message.cc?.length ? { cc: message.cc } : {}),
+        ...(message.replyTo ? { reply_to: message.replyTo } : {}),
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+        ...(message.attachments?.length ? { attachments: message.attachments.map((a) => ({ filename: a.filename, content: a.contentBase64 })) } : {}),
+      }),
       signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) {
@@ -51,6 +68,7 @@ export class ResendEmailProvider implements EmailProvider {
  */
 export class ConsoleEmailProvider implements EmailProvider {
   readonly name = 'console';
+  readonly capabilities = { send: false, customFrom: false, attachments: false };
   constructor(private readonly log: FastifyBaseLogger) {}
   async send(message: EmailMessage): Promise<EmailSendResult> {
     this.log.warn({ to: message.to, subject: message.subject, template: message.template }, '[email:console] NOT SENT — no email provider configured');
@@ -65,7 +83,7 @@ export function createEmailProvider(env: Env, log: FastifyBaseLogger): EmailProv
 
 export class EmailService {
   constructor(
-    private readonly provider: EmailProvider,
+    readonly provider: EmailProvider,
     private readonly db: Db,
     private readonly log: FastifyBaseLogger,
   ) {}

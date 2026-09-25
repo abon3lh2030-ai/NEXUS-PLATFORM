@@ -27,6 +27,13 @@ export const AI_EMPLOYEE_STATUSES = [
   'blocked',
   'completed',
   'failed',
+  'preparing_presentation',
+  'writing_email',
+  'waiting_email_approval',
+  'in_meeting',
+  'presenting',
+  'processing_meeting',
+  'creating_followup',
 ] as const;
 export type AiEmployeeStatus = (typeof AI_EMPLOYEE_STATUSES)[number];
 
@@ -142,6 +149,17 @@ export const NOTIFICATION_TYPES = [
   'payment_failure',
   'enterprise_approved',
   'enterprise_rejected',
+  'presentation_ready',
+  'presentation_needs_approval',
+  'email_draft_ready',
+  'email_needs_approval',
+  'email_sent',
+  'email_failed',
+  'meeting_starting_soon',
+  'ai_joined_meeting',
+  'meeting_completed',
+  'meeting_summary_ready',
+  'followup_ready',
   'mention',
   'system',
 ] as const;

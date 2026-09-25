@@ -211,6 +211,34 @@ describe('tenant data isolation', () => {
   });
 });
 
+describe('digital office isolation', () => {
+  it('AI email content and meeting transcripts are visible to managers only, never across orgs', async () => {
+    const { rows: mb } = await db.query<{ id: string }>(`insert into employee_mailboxes (organization_id, ai_employee_id, display_name) values ($1, $2, 'Atlas') returning id`, [ORG_A, AI_A]);
+    const { rows: th } = await db.query<{ id: string }>(`insert into email_threads (organization_id, mailbox_id, subject) values ($1, $2, 's') returning id`, [ORG_A, mb[0]!.id]);
+    await db.query(`insert into email_messages (organization_id, thread_id, mailbox_id, direction, folder, status, from_address, subject, body_text) values ($1, $2, $3, 'outbound', 'drafts', 'draft', 'atlas', 'secret subject', 'secret body')`, [ORG_A, th[0]!.id, mb[0]!.id]);
+    const { rows: mt } = await db.query<{ id: string }>(`insert into meetings (organization_id, title, scheduled_at) values ($1, 'Board', now()) returning id`, [ORG_A]);
+    await db.query(`insert into meeting_transcripts (organization_id, meeting_id, text) values ($1, $2, 'confidential discussion')`, [ORG_A, mt[0]!.id]);
+
+    expect(await asUser(db, U.ownerA, 'select id from email_messages')).toHaveLength(1);
+    expect(await asUser(db, U.memberA, 'select id from email_messages')).toHaveLength(0);
+    expect(await asUser(db, U.viewerA, 'select id from meeting_transcripts')).toHaveLength(0);
+    expect(await asUser(db, U.ownerA, 'select id from meeting_transcripts')).toHaveLength(1);
+    expect(await asUser(db, U.ownerB, 'select id from email_messages')).toHaveLength(0);
+    expect(await asUser(db, U.ownerB, 'select id from meetings')).toHaveLength(0);
+  });
+  it('presentations are organization-scoped and clients cannot write them', async () => {
+    await db.query(`insert into presentations (organization_id, title, ai_employee_id) values ($1, 'Plan', $2)`, [ORG_A, AI_A]);
+    expect(await asUser(db, U.memberA, 'select id from presentations')).toHaveLength(1);
+    expect(await asUser(db, U.ownerB, 'select id from presentations')).toHaveLength(0);
+    await expect(asUser(db, U.ownerA, `update presentations set status = 'final'`)).rejects.toThrow();
+  });
+  it('meeting participants must be exactly one of member / AI / external email', async () => {
+    const { rows } = await db.query<{ id: string }>(`select id from meetings where organization_id = $1 limit 1`, [ORG_A]);
+    await expect(db.query(`insert into meeting_participants (meeting_id, organization_id) values ($1, $2)`, [rows[0]!.id, ORG_A])).rejects.toThrow();
+    await db.query(`insert into meeting_participants (meeting_id, organization_id, external_email) values ($1, $2, 'guest@partner.com')`, [rows[0]!.id, ORG_A]);
+  });
+});
+
 describe('payment activation function', () => {
   it('activates once, is idempotent, rejects amount mismatch, and renewal keeps remaining days', async () => {
     const tx = async (amount: number) =>

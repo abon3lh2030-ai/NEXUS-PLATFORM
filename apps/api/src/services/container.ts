@@ -21,6 +21,19 @@ import { WorkService } from './work-service.js';
 import { InsightsService } from './insights.js';
 import { PlatformService } from './platform-service.js';
 import { MeetingAiService } from './meeting-ai.js';
+import type { OfficeTools } from './agent/tools.js';
+import { MailService } from './communications/mail-service.js';
+import { OfficeService } from './communications/office-service.js';
+import {
+  ElevenLabsVoiceProvider,
+  NexusCalendarProvider,
+  NexusMeetingProvider,
+  NoVoiceProvider,
+  RecallMeetingProvider,
+  type MeetingProvider,
+  type VoiceProvider,
+} from './communications/providers.js';
+import { PresentationService } from './presentations/presentation-service.js';
 import { mockFixtures } from './ai/mock-fixtures.js';
 
 export interface Services {
@@ -42,6 +55,9 @@ export interface Services {
   insights: InsightsService;
   platform: PlatformService;
   meetingAi: MeetingAiService;
+  presentations: PresentationService;
+  mail: MailService;
+  office: OfficeService;
 }
 
 export function createAIProvider(env: Env): AIProvider {
@@ -61,12 +77,26 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const entitlements = new EntitlementService(db);
   const files = new FileService(env, db, entitlements, audit, new NoopScanner());
   const computer: ComputerProvider = env.COMPUTER_PROVIDER === 'e2b' ? createE2BProvider() : new StorageWorkspaceComputerProvider(db, files);
-  const agents = new AgentRuntime({ env, db, ai, computer, files, entitlements, notifications, audit, log });
+  // Digital office (constructed after the runtime; the runtime resolves it lazily).
+  let officeTools: OfficeTools | null = null;
+  const agents = new AgentRuntime({
+    env, db, ai, computer, files, entitlements, notifications, audit, log,
+    office: () => {
+      if (!officeTools) throw new Error('office services not initialized');
+      return officeTools;
+    },
+  });
   const billing = new BillingService(env, db, entitlements, notifications, email, audit, log);
   const work = new WorkService(db, entitlements, audit, notifications, agents);
   const orgs = new OrganizationService(env, db, email, audit, notifications);
   const insights = new InsightsService(db);
   const nexusAi = new NexusAiService(db, ai, work, agents, insights);
   const platform = new PlatformService(env, db, email, audit, notifications, entitlements);
-  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work) };
+  const presentations = new PresentationService(db, ai, files, notifications, audit);
+  const mail = new MailService(env, db, email, notifications, audit);
+  const meetingProvider: MeetingProvider = env.MEETING_PROVIDER === 'recall' && env.RECALL_API_KEY ? new RecallMeetingProvider(env.RECALL_API_KEY, env.RECALL_REGION) : new NexusMeetingProvider();
+  const voice: VoiceProvider = env.VOICE_PROVIDER === 'elevenlabs' && env.ELEVENLABS_API_KEY ? new ElevenLabsVoiceProvider(env.ELEVENLABS_API_KEY, env.ELEVENLABS_DEFAULT_VOICE_ID) : new NoVoiceProvider();
+  const office = new OfficeService(db, ai, new NexusCalendarProvider(), meetingProvider, voice, mail, work, notifications, audit);
+  officeTools = { presentations, mail, office };
+  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work), presentations, mail, office };
 }

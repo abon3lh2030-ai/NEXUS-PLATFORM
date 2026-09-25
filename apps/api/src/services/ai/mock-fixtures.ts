@@ -39,5 +39,14 @@ export function mockFixtures(): Record<string, MockFixture> {
     nexus_step: () => ({ action: 'respond', tool: null, tool_input: null, message: '[MOCK] Nexus AI is running with the development mock provider. Configure ANTHROPIC_API_KEY for real answers.' }),
     meeting_ai: () => ({ summary: '[MOCK] Meeting summary', decisions: [], action_items: [] }),
     mission_summary: () => ({ summary: '[MOCK] Mission summary' }),
+    presentation_deck: () => ({
+      title: '[MOCK] Presentation',
+      slides: [
+        { kind: 'cover', role: null, title: '[MOCK] Presentation', subtitle: 'Development mock provider', points: null, note: 'AI employee', left_title: null, left_points: null, right_title: null, right_points: null, metrics: null, chart_type: null, categories: null, series: null, headers: null, rows: null, milestones: null, quote: null, attribution: null },
+        { kind: 'bullets', role: 'executive_summary', title: '[MOCK] Summary', subtitle: null, points: ['[MOCK] Not real AI output'], note: null, left_title: null, left_points: null, right_title: null, right_points: null, metrics: null, chart_type: null, categories: null, series: null, headers: null, rows: null, milestones: null, quote: null, attribution: null },
+        { kind: 'closing', role: null, title: 'Q&A', subtitle: '[MOCK]', points: null, note: null, left_title: null, left_points: null, right_title: null, right_points: null, metrics: null, chart_type: null, categories: null, series: null, headers: null, rows: null, milestones: null, quote: null, attribution: null },
+      ],
+    }),
+    meeting_followup: () => ({ summary: '[MOCK] Summary', minutes: '[MOCK] Minutes', decisions: [], action_items: [], followup_email: { subject: '[MOCK] Follow-up', body: '[MOCK]' } }),
   };
 }

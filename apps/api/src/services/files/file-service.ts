@@ -682,6 +682,49 @@ export class FileService {
     return row;
   }
 
+  /** Stores a generated binary artifact (e.g. PPTX) in an AI employee's workspace. Type is verified by signature. */
+  async writeWorkspaceBinary(owner: { orgId: string; aiEmployeeId: string }, name: string, bytes: Buffer): Promise<FileRow> {
+    const clean = sanitizeFileName(name);
+    const verdict = verifyFileContent(clean, bytes.subarray(0, SNIFF_BYTES), { allowArchives: false });
+    if (!verdict.ok || !verdict.type) throw badRequest(verdict.reason ?? 'unsupported_file_type');
+    const { fileId, key } = buildStorageKey({ space: 'ai_workspace', orgId: owner.orgId, aiEmployeeId: owner.aiEmployeeId });
+    const { error } = await this.db.storage.from(FILES_BUCKET).upload(key, bytes, { contentType: verdict.type.mime, upsert: false });
+    if (error) throw new AppError(502, 'storage_unavailable', error.message);
+    const row = unwrap(
+      await this.db
+        .from('company_files')
+        .insert({
+          id: fileId,
+          organization_id: owner.orgId,
+          space: 'ai_workspace',
+          visibility: 'restricted',
+          ai_employee_id: owner.aiEmployeeId,
+          uploaded_by_ai_employee_id: owner.aiEmployeeId,
+          original_name: clean,
+          extension: getExtension(clean),
+          storage_key: key,
+          mime_type: verdict.type.mime,
+          category: verdict.type.category,
+          size: bytes.byteLength,
+          checksum_sha256: createHash('sha256').update(bytes).digest('hex'),
+          status: 'ready',
+        })
+        .select(FILE_COLUMNS)
+        .single<FileRow>(),
+    );
+    await this.logActivity(row, 'uploaded', { aiEmployeeId: owner.aiEmployeeId });
+    return row;
+  }
+
+  /** Short-lived download URL minted by the API after it authorized access to the owning resource. */
+  async serviceSignedDownload(orgId: string, fileId: string): Promise<{ url: string; expires_in: number }> {
+    const { data: file } = await this.db.from('company_files').select(FILE_COLUMNS).eq('id', fileId).eq('organization_id', orgId).maybeSingle<FileRow>();
+    if (!file || file.deleted_at || file.purged_at || isPrivate(file)) throw notFound('file_not_found');
+    const { data } = await this.db.storage.from(FILES_BUCKET).createSignedUrl(file.storage_key, SIGNED_DOWNLOAD_TTL_SECONDS, { download: file.original_name });
+    if (!data) throw notFound('file_not_found');
+    return { url: data.signedUrl, expires_in: SIGNED_DOWNLOAD_TTL_SECONDS };
+  }
+
   async aiListWorkspaceFiles(ai: AiActor): Promise<Array<Pick<FileRow, 'id' | 'original_name' | 'size' | 'created_at'>>> {
     const { data } = await this.db
       .from('company_files')

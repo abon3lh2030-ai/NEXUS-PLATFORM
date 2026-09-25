@@ -56,6 +56,7 @@ export async function aiRoutes(app: FastifyInstance, s: Services) {
     );
     await s.db.from('ai_employee_permissions').insert({ ai_employee_id: employee.id, organization_id: a.orgId, permissions, updated_by: a.userId });
     await s.computer.createWorkspace({ orgId: a.orgId, aiEmployeeId: employee.id });
+    await s.mail.ensureMailbox(a.orgId, employee.id);
     await s.audit.audit({ organizationId: a.orgId, actorType: 'human', actorUserId: a.userId, action: 'ai_employee.created', targetType: 'ai_employee', targetId: employee.id });
     await s.audit.activity({ organizationId: a.orgId, actorUserId: a.userId, verb: 'hired', entityType: 'ai_employee', entityId: employee.id, summary: `${employee.name} — ${employee.job_title}` });
     return reply.code(201).send(employee);

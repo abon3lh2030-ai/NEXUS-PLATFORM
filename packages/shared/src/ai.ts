@@ -24,6 +24,16 @@ export const AGENT_TOOLS = [
   'publish_file_to_shared',
   'browser_action',
   'terminal_command',
+  'create_presentation',
+  'list_emails',
+  'read_email',
+  'draft_email',
+  'send_email',
+  'list_calendar',
+  'find_free_time',
+  'schedule_meeting',
+  'join_meeting',
+  'process_meeting',
   'finish',
 ] as const;
 export type AgentTool = (typeof AGENT_TOOLS)[number];
@@ -38,6 +48,8 @@ export interface AgentToolPolicy {
   autoApproveFrom: AutonomyLevel | null;
   /** Requires a real computer provider session. */
   requiresComputer?: boolean;
+  /** Requires a connected meeting provider that can join calls. */
+  requiresMeetingProvider?: boolean;
 }
 
 export const AGENT_TOOL_POLICIES: Record<AgentTool, AgentToolPolicy> = {
@@ -62,6 +74,19 @@ export const AGENT_TOOL_POLICIES: Record<AgentTool, AgentToolPolicy> = {
   publish_file_to_shared: { permission: 'files.shared.upload', risk: 'high', autoApproveFrom: 'autonomous' },
   browser_action: { permission: 'computer.browser', risk: 'medium', autoApproveFrom: 'execute_internal', requiresComputer: true },
   terminal_command: { permission: 'computer.terminal', risk: 'high', autoApproveFrom: null, requiresComputer: true },
+  create_presentation: { permission: 'presentations.create', risk: 'low', autoApproveFrom: 'draft' },
+  list_emails: { permission: 'email.read', risk: 'low', autoApproveFrom: 'suggest' },
+  read_email: { permission: 'email.read', risk: 'low', autoApproveFrom: 'suggest' },
+  draft_email: { permission: 'email.draft', risk: 'low', autoApproveFrom: 'draft' },
+  // The tool itself only REQUESTS a send; MailService applies the organization policy (mode, external
+  // recipients, commitments, limits) and creates the approval — so no double approval here.
+  send_email: { permission: 'email.send', risk: 'high', autoApproveFrom: 'draft' },
+  list_calendar: { permission: 'calendar.view', risk: 'low', autoApproveFrom: 'suggest' },
+  find_free_time: { permission: 'calendar.view', risk: 'low', autoApproveFrom: 'suggest' },
+  // Internal invites only; external invitees are queued for human approval by the tool.
+  schedule_meeting: { permission: 'meetings.create', risk: 'medium', autoApproveFrom: 'execute_internal' },
+  join_meeting: { permission: 'meetings.join', risk: 'medium', autoApproveFrom: 'execute_internal', requiresMeetingProvider: true },
+  process_meeting: { permission: 'meetings.create_tasks', risk: 'low', autoApproveFrom: 'draft' },
   finish: { risk: 'low', autoApproveFrom: 'suggest' },
 };
 

@@ -15,7 +15,7 @@ import type { NotificationService } from '../notifications.js';
 import { buildAgentSystemPrompt, buildTaskKickoff } from './prompts.js';
 import { agentStepSchema, cleanArgs, TOOL_ARG_SCHEMAS, type AgentStep } from './schemas.js';
 import { evaluateToolCall, redactForLog } from './tool-guard.js';
-import { AgentToolExecutor, type DelegationPort, type ToolContext, type ToolResult } from './tools.js';
+import { AgentToolExecutor, type DelegationPort, type OfficeTools, type ToolContext, type ToolResult } from './tools.js';
 
 interface ResumeState {
   messages: ChatMessage[];
@@ -34,6 +34,8 @@ interface Deps {
   notifications: NotificationService;
   audit: AuditService;
   log: FastifyBaseLogger;
+  /** Lazily resolved (constructed after the runtime) to avoid a circular dependency. */
+  office: () => OfficeTools;
 }
 
 const PHASE_TO_STATUS = { thinking: 'thinking', researching: 'researching', reading: 'reading', writing: 'writing', executing: 'executing' } as const;
@@ -46,7 +48,21 @@ export class AgentRuntime implements DelegationPort {
   private stopped = true;
 
   constructor(private readonly d: Deps) {
-    this.tools = new AgentToolExecutor(d.db, d.files, d.computer, this);
+    this.tools = new AgentToolExecutor(d.db, d.files, d.computer, this, {
+      get presentations() {
+        return d.office().presentations;
+      },
+      get mail() {
+        return d.office().mail;
+      },
+      get office() {
+        return d.office().office;
+      },
+    });
+  }
+
+  private caps() {
+    return { ...this.d.computer.capabilities, meetingJoin: this.d.office().office.meetings.capabilities.join };
   }
 
   /* ============================== loading ============================== */
@@ -275,7 +291,8 @@ export class AgentRuntime implements DelegationPort {
         const task = s.task_id ? ((await this.d.db.from('tasks').select('*').eq('id', s.task_id).maybeSingle<TaskRow>()).data ?? null) : null;
         const computer = await this.d.computer.createSession(actor, s.id);
         try {
-          const res = await this.executeGuarded(pending.tool, pending.args, { ai: actor, session: s, computer, task }, { preApproved: true, executionId: pending.executionId });
+          const { data: orgRow } = await this.d.db.from('organizations').select('default_locale').eq('id', s.organization_id).single<{ default_locale: 'ar' | 'en' }>();
+          const res = await this.executeGuarded(pending.tool, pending.args, { ai: actor, session: s, computer, task, language: orgRow?.default_locale ?? 'ar' }, { preApproved: true, executionId: pending.executionId });
           if (res.artifact) state.artifacts.push(res.artifact);
           resultText = `Manager ${verdictText} your ${pending.tool} action. Result:\n${res.output}`;
         } finally {
@@ -421,12 +438,12 @@ export class AgentRuntime implements DelegationPort {
         ai: actor,
         orgName: org.name,
         locale: org.default_locale,
-        caps: this.d.computer.capabilities,
+        caps: this.caps(),
         colleagues: (colleagues ?? []) as Array<{ id: string; name: string; job_title: string }>,
         instructions: instructionRows.map((i) => i.body),
       });
       const state: ResumeState = (s.resume_state as ResumeState | null) ?? { messages: [{ role: 'user', content: buildTaskKickoff(task) }], artifacts: [] };
-      const ctx: ToolContext = { ai: actor, session: s, computer, task };
+      const ctx: ToolContext = { ai: actor, session: s, computer, task, language: org.default_locale };
 
       for (;;) {
         // --- manager control & safety limits ---
@@ -469,7 +486,7 @@ export class AgentRuntime implements DelegationPort {
         const args = parsed.data as Record<string, unknown>;
 
         // --- permission / autonomy / risk gate ---
-        const guard = evaluateToolCall(actor, step.tool, this.d.computer.capabilities);
+        const guard = evaluateToolCall(actor, step.tool, this.caps());
         if (guard.decision === 'deny') {
           await this.recordToolExecution(s, step.tool, args, 'denied', guard.risk, { denial_reason: guard.reason });
           await this.event(s, 'tool_denied', `Denied: ${step.tool} (${guard.reason})`);
@@ -561,7 +578,7 @@ export class AgentRuntime implements DelegationPort {
 
   private async executeGuarded(tool: AgentTool, args: Record<string, unknown>, ctx: ToolContext, opts: { preApproved?: boolean; executionId?: string }): Promise<ToolResult> {
     const s = ctx.session;
-    const guard = evaluateToolCall(ctx.ai, tool, this.d.computer.capabilities, { preApproved: opts.preApproved ?? false });
+    const guard = evaluateToolCall(ctx.ai, tool, this.caps(), { preApproved: opts.preApproved ?? false });
     if (guard.decision !== 'allow') throw forbidden(`tool_not_allowed:${tool}`);
     const execId = opts.executionId ?? (await this.recordToolExecution(s, tool, args, 'running', guard.risk));
     if (opts.executionId) await this.d.db.from('ai_tool_executions').update({ status: 'running' }).eq('id', execId);

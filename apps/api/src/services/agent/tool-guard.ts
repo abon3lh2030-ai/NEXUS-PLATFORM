@@ -15,7 +15,7 @@ export type GuardDecision =
 export function evaluateToolCall(
   ai: Pick<AiActor, 'permissions' | 'autonomy'>,
   tool: string,
-  caps: ComputerCapabilities,
+  caps: ComputerCapabilities & { meetingJoin?: boolean },
   opts: { preApproved?: boolean } = {},
 ): GuardDecision {
   if (!(AGENT_TOOLS as readonly string[]).includes(tool)) return { decision: 'deny', risk: 'high', reason: 'unknown_tool' };
@@ -27,6 +27,7 @@ export function evaluateToolCall(
     const cap = tool === 'browser_action' ? caps.browser : caps.terminal;
     if (!cap) return { decision: 'deny', risk: policy.risk, reason: 'computer_capability_unavailable' };
   }
+  if (policy.requiresMeetingProvider && !caps.meetingJoin) return { decision: 'deny', risk: policy.risk, reason: 'meeting_provider_not_connected' };
   if (opts.preApproved) return { decision: 'allow', risk: policy.risk };
   if (policy.autoApproveFrom === null || !autonomyAtLeast(ai.autonomy, policy.autoApproveFrom)) {
     return { decision: 'needs_approval', risk: policy.risk, reason: `autonomy_${ai.autonomy}_requires_approval` };

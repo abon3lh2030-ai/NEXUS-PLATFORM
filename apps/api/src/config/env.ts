@@ -50,6 +50,22 @@ const EnvSchema = z
 
     MALWARE_SCAN_PROVIDER: z.enum(['none']).default('none'),
 
+    // Digital office — AI employee mail identities (requires a domain verified with the email provider)
+    EMAIL_AGENT_DOMAIN: z.string().regex(/^[a-z0-9.-]+\.[a-z]{2,}$/i).optional(),
+    INBOUND_EMAIL_WEBHOOK_SECRET: z.string().min(24).optional(),
+    CALENDAR_PROVIDER: z.enum(['nexus', 'google', 'microsoft']).default('nexus'),
+    GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
+    GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
+    MICROSOFT_OAUTH_CLIENT_ID: z.string().optional(),
+    MICROSOFT_OAUTH_CLIENT_SECRET: z.string().optional(),
+    MEETING_PROVIDER: z.enum(['nexus', 'recall']).default('nexus'),
+    RECALL_API_KEY: z.string().optional(),
+    RECALL_REGION: z.string().regex(/^[a-z0-9-]+$/).default('us-east-1'),
+    RECALL_WEBHOOK_SECRET: z.string().optional(),
+    VOICE_PROVIDER: z.enum(['none', 'elevenlabs']).default('none'),
+    ELEVENLABS_API_KEY: z.string().optional(),
+    ELEVENLABS_DEFAULT_VOICE_ID: z.string().optional(),
+
     AGENT_WORKER_ENABLED: bool.default(true),
     AGENT_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(2),
     AGENT_POLL_INTERVAL_MS: z.coerce.number().int().min(250).default(2000),
@@ -72,6 +88,15 @@ const EnvSchema = z
     }
     if (env.EMAIL_PROVIDER === 'resend' && !env.RESEND_API_KEY) {
       ctx.addIssue({ code: 'custom', path: ['RESEND_API_KEY'], message: 'required when EMAIL_PROVIDER=resend' });
+    }
+    if (env.MEETING_PROVIDER === 'recall' && !env.RECALL_API_KEY) {
+      ctx.addIssue({ code: 'custom', path: ['RECALL_API_KEY'], message: 'required when MEETING_PROVIDER=recall' });
+    }
+    if (env.VOICE_PROVIDER === 'elevenlabs' && !env.ELEVENLABS_API_KEY) {
+      ctx.addIssue({ code: 'custom', path: ['ELEVENLABS_API_KEY'], message: 'required when VOICE_PROVIDER=elevenlabs' });
+    }
+    if (env.CALENDAR_PROVIDER !== 'nexus') {
+      ctx.addIssue({ code: 'custom', path: ['CALENDAR_PROVIDER'], message: 'external calendar sync (OAuth) is not connected yet — use nexus' });
     }
     if (env.COMPUTER_PROVIDER === 'e2b' && !env.E2B_API_KEY) {
       ctx.addIssue({ code: 'custom', path: ['E2B_API_KEY'], message: 'required when COMPUTER_PROVIDER=e2b' });

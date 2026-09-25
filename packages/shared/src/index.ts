@@ -5,3 +5,5 @@ export * from './saudi.js';
 export * from './billing.js';
 export * from './ai.js';
 export * from './schemas.js';
+export * from './presentations.js';
+export * from './communications.js';

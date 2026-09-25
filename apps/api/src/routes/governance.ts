@@ -42,7 +42,23 @@ export async function governanceRoutes(app: FastifyInstance, s: Services) {
       .maybeSingle<ApprovalRow>();
     if (!updated) throw conflict('already_decided');
     if (body.comment) await s.db.from('approval_comments').insert({ approval_id: approval.id, organization_id: a.orgId, author_user_id: a.userId, body: body.comment });
-    await s.agents.onApprovalDecided(updated, body.decision, body.comment, a.userId);
+    // Digital-office approvals are resolved by their own services; everything else by the agent runtime.
+    if (updated.approval_type === 'email_send' && updated.entity_id) {
+      await s.mail.onApproval(a, updated.entity_id, body.decision, body.comment);
+    } else if (updated.approval_type === 'presentation' && updated.entity_id) {
+      if (body.decision === 'approved') await s.presentations.approve(a, updated.entity_id, false);
+      else if (body.decision === 'revision_requested') await s.presentations.requestRevision(a, updated.entity_id, body.comment || 'Please revise.');
+      else await s.db.from('presentations').update({ status: 'changes_requested' }).eq('id', updated.entity_id).eq('organization_id', a.orgId);
+    } else if (updated.approval_type === 'meeting_action' && updated.entity_id && body.decision === 'approved') {
+      const emails = Array.isArray(updated.payload.emails) ? (updated.payload.emails as string[]) : [];
+      if (emails.length) {
+        await s.db.from('meeting_participants').insert(emails.map((e) => ({ meeting_id: updated.entity_id!, organization_id: a.orgId, external_email: e })));
+        const { data: ev } = await s.db.from('calendar_events').select('id').eq('meeting_id', updated.entity_id).maybeSingle<{ id: string }>();
+        if (ev) await s.db.from('calendar_event_attendees').insert(emails.map((e) => ({ event_id: ev.id, organization_id: a.orgId, external_email: e })));
+      }
+    } else {
+      await s.agents.onApprovalDecided(updated, body.decision, body.comment, a.userId);
+    }
     if (approval.requested_by_user_id) {
       await s.notifications.notify({ organizationId: a.orgId, userIds: [approval.requested_by_user_id], type: 'approval_resolved', title: `${approval.title}: ${body.decision}`, link: `/app/approvals?id=${approval.id}` });
     }
