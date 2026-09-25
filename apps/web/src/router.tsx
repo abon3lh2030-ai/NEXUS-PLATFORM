@@ -55,6 +55,10 @@ const AuditSettings = m(() => import('./features/settings/settings-pages'), 'Aud
 const Billing = m(() => import('./features/settings/billing'), 'BillingPage');
 const BillingCallback = m(() => import('./features/settings/billing'), 'BillingCallbackPage');
 const EnterpriseOffer = m(() => import('./features/settings/billing'), 'EnterpriseOfferPage');
+const Presentations = m(() => import('./features/office/presentations'), 'PresentationsPage');
+const PresentationView = m(() => import('./features/office/presentations'), 'PresentationPage');
+const Calendar = m(() => import('./features/office/calendar'), 'CalendarPage');
+const Integrations = m(() => import('./features/office/integrations'), 'IntegrationsSettings');
 const AdminLayout = m(() => import('./pages/admin/admin'), 'AdminLayout');
 const AdminDashboard = m(() => import('./pages/admin/admin'), 'AdminDashboard');
 const AdminApplications = m(() => import('./pages/admin/admin'), 'AdminApplications');
@@ -118,6 +122,9 @@ export const router = createBrowserRouter([
       { path: 'decisions', element: p(<Decisions />) },
       { path: 'memory', element: p(<Memory />) },
       { path: 'knowledge', element: p(<Knowledge />) },
+      { path: 'presentations', element: p(<Presentations />) },
+      { path: 'presentations/:id', element: p(<PresentationView />) },
+      { path: 'calendar', element: p(<Calendar />) },
       { path: 'analytics', element: p(<Analytics />) },
       { path: 'billing/callback', element: s(<BillingCallback />) },
       { path: 'billing/offers/:id', element: s(<EnterpriseOffer />) },
@@ -130,6 +137,7 @@ export const router = createBrowserRouter([
           { path: 'members', element: s(<MembersSettings />) },
           { path: 'billing', element: s(<Billing />) },
           { path: 'permissions', element: p(<PermissionsSettings />) },
+          { path: 'integrations', element: p(<Integrations />) },
           { path: 'audit', element: p(<AuditSettings />) },
         ],
       },

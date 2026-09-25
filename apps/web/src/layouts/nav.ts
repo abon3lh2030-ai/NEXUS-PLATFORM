@@ -4,6 +4,8 @@ import {
   Bell,
   Bot,
   Brain,
+  CalendarRange,
+  Presentation,
   CalendarDays,
   CheckCircle2,
   FileText,
@@ -68,6 +70,8 @@ export const NAV: NavGroup[] = [
       { to: '/app/projects', key: 'projects', icon: FolderKanban },
       { to: '/app/tasks', key: 'tasks', icon: ListChecks },
       { to: '/app/meetings', key: 'meetings', icon: CalendarDays },
+      { to: '/app/calendar', key: 'calendar', icon: CalendarRange },
+      { to: '/app/presentations', key: 'presentations', icon: Presentation },
     ],
   },
   {

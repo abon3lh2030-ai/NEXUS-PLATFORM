@@ -20,7 +20,7 @@ import {
 } from '@nexus/ui';
 import { AI_PERMISSIONS, AUTONOMY_LEVELS } from '@nexus/shared';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, BarChart3, Brain, Cpu, Download, FileText, FolderOpen, Globe, Inbox, ListChecks, Lock, Send, Settings, ShieldCheck, Terminal, Trash2 } from 'lucide-react';
+import { CalendarDays, Mail, Presentation as PresentationIcon, Users, Activity, BarChart3, Brain, Cpu, Download, FileText, FolderOpen, Globe, Inbox, ListChecks, Lock, Send, Settings, ShieldCheck, Terminal, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
@@ -32,6 +32,7 @@ import { api, apiDelete, apiPatch, apiPost, apiPut } from '@/lib/api';
 import { durationBetween, formatBytes, formatDateTime, formatNumber, formatRelative, formatUsd } from '@/lib/format';
 import { useSession } from '@/providers/session';
 import { SessionControls, SessionTimeline, SessionViewer, useLiveSession } from './session-viewer';
+import { DigitalOffice, EmployeeCalendarTab, EmployeeMeetingsTab, EmployeePresentationsTab, MailTab, VoiceSettings } from '@/features/office/employee-office';
 import type { AiEmployeeDetail, WorkSession } from './types';
 import { useDepartments } from './workforce-page';
 
@@ -61,7 +62,11 @@ export function EmployeePage() {
   const tabs = [
     { v: 'overview', icon: Activity, label: t('ai.tabs.overview') },
     { v: 'tasks', icon: ListChecks, label: t('ai.tabs.tasks') },
-    ...(can('ai.computer.view') ? [{ v: 'computer', icon: Cpu, label: t('ai.tabs.computer') }, { v: 'files', icon: FolderOpen, label: t('ai.tabs.files') }] : []),
+    ...(can('ai.computer.view') ? [{ v: 'computer', icon: Cpu, label: t('ai.tabs.computer') }, { v: 'mail', icon: Mail, label: t('ai.tabs.mail') }] : []),
+    { v: 'calendar', icon: CalendarDays, label: t('ai.tabs.calendar') },
+    { v: 'meetings', icon: Users, label: t('ai.tabs.meetings') },
+    { v: 'presentations', icon: PresentationIcon, label: t('ai.tabs.presentations') },
+    ...(can('ai.computer.view') ? [{ v: 'files', icon: FolderOpen, label: t('ai.tabs.files') }] : []),
     { v: 'documents', icon: FileText, label: t('ai.tabs.documents') },
     { v: 'memory', icon: Brain, label: t('ai.tabs.memory') },
     { v: 'activity', icon: Inbox, label: t('ai.tabs.activity') },
@@ -91,7 +96,11 @@ export function EmployeePage() {
         <TabsList className="w-full justify-start">{tabs.map((x) => <TabsTrigger key={x.v} value={x.v}><x.icon /> {x.label}</TabsTrigger>)}</TabsList>
         <TabsContent value="overview"><OverviewTab e={e} onOpenSession={setSessionId} /></TabsContent>
         <TabsContent value="tasks"><TasksTab employeeId={e.id} onOpenSession={setSessionId} /></TabsContent>
-        <TabsContent value="computer"><ComputerTab employeeId={e.id} onOpenSession={setSessionId} /></TabsContent>
+        <TabsContent value="computer"><div className="grid gap-6"><DigitalOffice onOpen={(v) => setParams({ tab: v })} /><ComputerTab employeeId={e.id} onOpenSession={setSessionId} /></div></TabsContent>
+        <TabsContent value="mail"><MailTab employeeId={e.id} /></TabsContent>
+        <TabsContent value="calendar"><EmployeeCalendarTab employeeId={e.id} /></TabsContent>
+        <TabsContent value="meetings"><EmployeeMeetingsTab employeeId={e.id} /></TabsContent>
+        <TabsContent value="presentations"><EmployeePresentationsTab employeeId={e.id} /></TabsContent>
         <TabsContent value="files"><WorkspaceFilesTab employeeId={e.id} /></TabsContent>
         <TabsContent value="documents"><DocumentsTab employeeId={e.id} /></TabsContent>
         <TabsContent value="memory"><MemoryTab employeeId={e.id} /></TabsContent>
@@ -423,6 +432,7 @@ function SettingsTab({ e }: { e: AiEmployeeDetail }) {
         <div className="mt-4 flex items-center gap-3"><Switch id="active" checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /><Label htmlFor="active">{t('ai.active')}</Label></div>
         <Button className="mt-4" onClick={() => save.mutate(undefined)} loading={save.isPending}>{t('common.save')}</Button>
       </Section>
+      <VoiceSettings employeeId={e.id} />
       <Section title={<span className="text-destructive">{t('settings.dangerZone')}</span>}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">{t('workforce.removeHint')}</p>

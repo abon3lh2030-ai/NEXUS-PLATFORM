@@ -14,6 +14,7 @@ import { api, apiDelete, apiPatch, apiPost } from '@/lib/api';
 import { formatDate, formatDateTime, formatRelative } from '@/lib/format';
 import { useSession } from '@/providers/session';
 import { EntityDialog, useEntityList, useOptions, type FieldDef } from './shared';
+import { MeetingOfficePanel } from '@/features/office/meeting-office';
 
 /* ------------------------------ Meetings ------------------------------ */
 
@@ -95,6 +96,7 @@ export function MeetingPage() {
           <LinkedFiles entityType="meeting" entityId={m.id} />
         </div>
       </div>
+      <div className="mt-6"><MeetingOfficePanel meetingId={m.id} /></div>
       <EntityDialog entity="meetings" id={m.id} open={edit} onOpenChange={setEdit} title={t('common.edit')} fields={fields} initial={m as unknown as Record<string, unknown>} />
     </FeatureGate>
   );

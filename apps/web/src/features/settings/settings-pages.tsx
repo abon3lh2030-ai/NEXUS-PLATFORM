@@ -19,7 +19,7 @@ import {
 } from '@nexus/ui';
 import { COMPANY_SIZES, DEFAULT_ROLE_PERMISSIONS, HUMAN_ROLES, INDUSTRIES, OWNER_LOCKED_PERMISSIONS, PERMISSIONS, type HumanRole } from '@nexus/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Building2, Copy, CreditCard, ImageUp, KeyRound, Pencil, ScrollText, ShieldCheck, Trash2, User, UserPlus, Users } from 'lucide-react';
+import { Plug, AlertTriangle, Building2, Copy, CreditCard, ImageUp, KeyRound, Pencil, ScrollText, ShieldCheck, Trash2, User, UserPlus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useNavigate } from 'react-router';
@@ -44,6 +44,7 @@ export function SettingsLayout() {
     { to: '/app/settings/members', key: 'members', icon: Users, show: can('members.view') },
     { to: '/app/settings/billing', key: 'billing', icon: CreditCard, show: can('billing.view') },
     { to: '/app/settings/permissions', key: 'permissions', icon: KeyRound, show: can('org.manage') },
+    { to: '/app/settings/integrations', key: 'integrations', icon: Plug, show: can('work.view') },
     { to: '/app/settings/audit', key: 'audit', icon: ScrollText, show: can('audit.view') },
   ].filter((i) => i.show !== false);
   return (
