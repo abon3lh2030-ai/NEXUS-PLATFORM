@@ -25,7 +25,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { KeyValue, LoadingBlock, StatusBadge, useAction, useErrorMessage } from '@/components/common';
+import { LoadingBlock, StatusBadge, useAction, useErrorMessage } from '@/components/common';
 import { NoAccess } from '@/components/guards';
 import { downloadFile } from '@/features/files/preview';
 import { api, apiDelete, apiPatch, apiPost, apiPut } from '@/lib/api';

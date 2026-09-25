@@ -7,7 +7,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createRequire } from 'node:module';
 
 const root = new URL('..', import.meta.url).pathname;
 const src = join(root, 'apps/web/src');
@@ -45,14 +44,9 @@ function flatten(obj, prefix = '', out = new Map()) {
 }
 
 async function load(name) {
-  // Transpile-free load: the locale files are plain TS objects; strip the type-only bits.
-  const code = readFileSync(join(src, 'i18n', `${name}.ts`), 'utf8')
-    .replace(/^import .*$/gm, '')
-    .replace(/export const (\w+)\s*(:[^=]+)?=/, 'module.exports =')
-    .replace(/\s+as const;?\s*$/, ';');
-  const m = { exports: {} };
-  new Function('module', 'exports', 'require', code)(m, m.exports, createRequire(import.meta.url));
-  return m.exports;
+  // Node >= 22.18 / 24 strips TypeScript types natively; the locale files are plain object literals.
+  const mod = await import(pathToFileURL(join(src, 'i18n', `${name}.ts`)).href);
+  return mod[name];
 }
 
 const [ar, en] = await Promise.all([load('ar'), load('en')]);
@@ -79,4 +73,3 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(`i18n OK — ${staticKeys.size} static keys, ${dynamicPrefixes.size} dynamic prefixes, ${far.size} entries per locale`);
-void pathToFileURL;

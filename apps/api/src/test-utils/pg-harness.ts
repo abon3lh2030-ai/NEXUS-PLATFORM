@@ -55,7 +55,7 @@ export async function createMigratedDb(): Promise<PGlite> {
     try {
       await db.exec(sql);
     } catch (err) {
-      throw new Error(`Migration ${f} failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw new Error(`Migration ${f} failed: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
     }
   }
   return db;

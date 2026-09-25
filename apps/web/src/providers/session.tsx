@@ -48,9 +48,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setLoading(false);
     });
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => {
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
-      if (!s) qc.clear();
+      // Only a real sign-out clears cached data. INITIAL_SESSION (null) must not wipe
+      // in-flight public queries such as /plans.
+      if (event === 'SIGNED_OUT') qc.clear();
     });
     return () => data.subscription.unsubscribe();
   }, [qc]);

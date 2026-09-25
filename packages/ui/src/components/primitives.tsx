@@ -78,12 +78,28 @@ export const Label = React.forwardRef<React.ComponentRef<typeof LabelPrimitive.R
 ));
 Label.displayName = 'Label';
 
+/**
+ * Form field wrapper. Links the label to the control (and error/hint via aria-describedby)
+ * automatically when the single child is an element without its own id.
+ */
 export function Field({ label, error, hint, children, className, htmlFor }: { label?: React.ReactNode; error?: React.ReactNode; hint?: React.ReactNode; children: React.ReactNode; className?: string; htmlFor?: string }) {
+  const autoId = React.useId();
+  const msgId = `${autoId}-msg`;
+  let controlId = htmlFor;
+  let control = children;
+  if (!htmlFor && React.isValidElement<{ id?: string; 'aria-describedby'?: string; 'aria-invalid'?: boolean }>(children) && typeof children.type !== 'symbol') {
+    controlId = children.props.id ?? autoId;
+    control = React.cloneElement(children, {
+      id: controlId,
+      ...(error || hint ? { 'aria-describedby': msgId } : {}),
+      ...(error ? { 'aria-invalid': true } : {}),
+    });
+  }
   return (
     <div className={cn('grid gap-1.5', className)}>
-      {label && <Label htmlFor={htmlFor}>{label}</Label>}
-      {children}
-      {error ? <p className="text-xs text-destructive">{error}</p> : hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      {label && <Label htmlFor={controlId}>{label}</Label>}
+      {control}
+      {error ? <p id={msgId} className="text-xs text-destructive">{error}</p> : hint ? <p id={msgId} className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
