@@ -26,6 +26,8 @@
    - **Redirect URLs:** أضف `https://app.your-domain.sa/auth/callback`، وللتطوير المحلي `http://localhost:5173/auth/callback`.
 4. فعّل **Email confirmations** من Authentication → Providers → Email.
 5. تأكد أن الحاوية `company-files` **خاصة (Private)**. الـ migration يُنشئها خاصة تلقائيًا.
+   - أقصى حجم للملف في الباقات يصل إلى 1 GB (الأعمال) و2 GB (المؤسسات). ارفع حد الرفع العام من **Storage → Settings → Upload file size limit** إلى 2 GB.
+   - هذا يتطلب خطة Supabase مدفوعة (Pro)، لأن الخطة المجانية لا تسمح بأكثر من 50 MB للملف.
 6. لمنح حساب المشرف العام: سجّل بالحساب أولًا، ثم نفّذ `scripts/grant-super-admin.sql` في SQL Editor.
 
 ---

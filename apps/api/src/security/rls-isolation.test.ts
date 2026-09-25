@@ -92,6 +92,16 @@ describe('migrations', () => {
       ['enterprise', null],
     ]);
   });
+  it('applies the raised plan limits', async () => {
+    const r = await db.query<{ code: string; e: Record<string, number | null> }>('select code, entitlements as e from subscription_plans order by sort_order');
+    const by = Object.fromEntries(r.rows.map((x) => [x.code, x.e]));
+    expect(by.starter).toMatchObject({ human_members: 3, ai_employees: 5, ai_executions_per_year: 600, storage_bytes: 50 * 1024 ** 3, max_file_size_bytes: 250 * 1024 ** 2, concurrent_ai_sessions: 3, computer_minutes_per_year: 6000 });
+    expect(by.pro).toMatchObject({ human_members: 10, ai_employees: 15, ai_executions_per_year: 2500, storage_bytes: 200 * 1024 ** 3, max_file_size_bytes: 500 * 1024 ** 2, concurrent_ai_sessions: 8 });
+    expect(by.business).toMatchObject({ human_members: 30, ai_employees: 40, ai_executions_per_year: 8000, storage_bytes: 1024 ** 4, max_file_size_bytes: 1024 ** 3, concurrent_ai_sessions: 20, computer_minutes_per_year: 100000 });
+    expect(by.enterprise).toMatchObject({ max_file_size_bytes: 2 * 1024 ** 3, concurrent_ai_sessions: 50, storage_bytes: null });
+    const features = await db.query<{ n: number }>(`select jsonb_array_length(entitlements->'features') n from subscription_plans where code = 'business'`);
+    expect(features.rows[0]!.n).toBe(15); // features untouched by the limits migration
+  });
   it('seed all AI employee templates', async () => {
     const r = await db.query<{ n: number }>('select count(*)::int n from ai_employee_templates');
     expect(r.rows[0]!.n).toBe(21);
