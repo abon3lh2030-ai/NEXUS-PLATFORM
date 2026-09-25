@@ -330,7 +330,7 @@ export const en: typeof ar = {
   },
   audit: { action: 'Action', actor: 'Actor', target: 'Target', actors: { human: 'User', ai: 'AI', system: 'System', super_admin: 'Platform admin' } },
   billing: {
-    description: 'Annual billing only. Pay with Moyasar (Apple Pay and cards).', current: 'Current subscription', startedAt: 'Started', endsAt: 'Ends', interval: 'Billing interval',
+    description: 'Annual billing only.', current: 'Current subscription', startedAt: 'Started', endsAt: 'Ends', interval: 'Billing interval',
     yearly: 'Yearly', renewNote: 'Renewing early adds a full year to your current end date — no remaining days are lost.', usage: 'Usage',
     usageAfterSubscribe: 'Usage appears once your subscription is active.', computerMinutes: 'Virtual computer minutes', plans: 'Annual plans',
     plansHint: "Prices are set by the server and can't be changed from the browser.", paymentsNotConfigured: "The Moyasar payment gateway isn't connected in this environment yet.",
@@ -397,7 +397,7 @@ export const en: typeof ar = {
   },
   notFound: { title: 'Page not found', body: 'The page may have moved or the link is incorrect.', home: 'Back to home' },
   pricing: {
-    title: 'Clear annual pricing', subtitle: 'Choose the plan that fits your company. Annual billing only, via Apple Pay or card.', popular: 'Most popular', custom: 'Custom',
+    title: 'Clear annual pricing', subtitle: 'Choose the plan that fits your company. Annual billing only.', popular: 'Most popular', custom: 'Custom',
     year: 'year', annualOnly: 'Billed annually only', unlimited: 'Unlimited', humans: 'Human members', aiEmployees: 'AI employees', projects: 'Active projects',
     executions: 'AI executions per year', storage: 'Storage', requestCustom: 'Request a custom plan', notesTitle: 'Notes',
     notes: ['Prices are in Saudi Riyals and billed annually.', 'The platform is currently available only to companies registered in Saudi Arabia.', 'Renewing early never loses remaining days.', 'When a subscription expires, paid access stops immediately and all data is kept.'],
@@ -433,7 +433,7 @@ export const en: typeof ar = {
   landing: {
     badge: 'Built for Saudi companies', titleA: 'Run your company with a team of', titleB: 'humans and AI employees',
     subtitle: 'NEXUS is a complete operating platform: AI employees that actually work with defined permissions and isolated virtual computers, plus company files, projects, tasks and decisions in one place.',
-    ctaPrimary: 'Register your company', ctaSecondary: 'Explore the platform', ctaNote: 'Annual subscription · Apple Pay and cards via Moyasar',
+    ctaPrimary: 'Register your company', ctaSecondary: 'Explore the platform', ctaNote: 'Annual subscription',
     preview: {
       title: 'AI Operations Room', illustration: 'Interface illustration', timeline: 'Timeline',
       rows: [
@@ -472,7 +472,7 @@ export const en: typeof ar = {
       { title: 'Every action audited', body: 'Every AI action passes validation, permissions, autonomy and approval checks and is written to the audit log.' },
     ],
     finalTitle: 'Ready to run your company with AI?', finalSubtitle: 'Register your company, hire your first AI employee and give it a real task today.',
-    finalPoints: ['For Saudi companies', 'Annual subscription', 'Apple Pay & cards'],
+    finalPoints: ['For Saudi companies', 'Annual subscription'],
   },
   platformPage: {
     title: 'The company operating system', subtitle: 'Everything you need to run the company and its human and AI teams in one platform.',
@@ -496,7 +496,7 @@ export const en: typeof ar = {
       { title: 'Company files', body: 'Shared and private, drag & drop, preview, folders, search, trash and restore.' },
       { title: 'Nexus AI', body: 'A central assistant that understands Arabic and turns requests into executed work.' },
       { title: 'Roles & permissions', body: 'Owner, admin, manager, member, viewer — with customizable permissions.' },
-      { title: 'Annual billing & Moyasar', body: 'Apple Pay and cards, instant activation after server-side payment verification.' },
+      { title: 'Annual billing', body: 'Instant activation after server-side payment verification.' },
     ],
   },
   workforcePage: {
