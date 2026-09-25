@@ -1,0 +1,44 @@
+{
+  "name": "nexus-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NEXUS — AI-Powered Company Operating Platform for Saudi companies",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "npm run build -w @nexus/shared && concurrently -n api,web -c blue,magenta \"npm run dev -w @nexus/api\" \"npm run dev -w @nexus/web\"",
+    "build": "npm run build -w @nexus/shared && npm run build -w @nexus/api && npm run build -w @nexus/web",
+    "build:api": "npm run build -w @nexus/shared && npm run build -w @nexus/api",
+    "build:web": "npm run build -w @nexus/shared && npm run build -w @nexus/web",
+    "start:api": "npm run start -w @nexus/api",
+    "lint": "eslint .",
+    "typecheck": "npm run build -w @nexus/shared && tsc -p packages/shared --noEmit && tsc -p apps/api --noEmit && tsc -p apps/web --noEmit",
+    "test": "npm run build -w @nexus/shared && vitest run",
+    "test:rls": "node scripts/test-rls.mjs",
+    "test:e2e": "npm run test:e2e -w @nexus/web",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.2",
+    "concurrently": "^10.0.5",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents@2.3.3": true
+  }
+}

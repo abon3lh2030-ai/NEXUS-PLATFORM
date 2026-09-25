@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+@import '@nexus/config/theme.css';
+@source '../../../packages/ui/src';
+
+@layer base {
+  html[dir='ltr'] body {
+    font-family: 'Inter', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+  }
+  .prose-nexus h1 { @apply mt-6 mb-3 text-2xl font-semibold; }
+  .prose-nexus h2 { @apply mt-6 mb-2 text-xl font-semibold; }
+  .prose-nexus h3 { @apply mt-4 mb-2 text-lg font-semibold; }
+  .prose-nexus p { @apply my-2 leading-7; }
+  .prose-nexus ul { @apply my-2 list-disc ps-6; }
+  .prose-nexus ol { @apply my-2 list-decimal ps-6; }
+  .prose-nexus li { @apply my-1; }
+  .prose-nexus table { @apply my-3 w-full border-collapse text-sm; }
+  .prose-nexus th, .prose-nexus td { @apply border px-2 py-1 text-start; }
+  .prose-nexus code { @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]; }
+  .prose-nexus pre { @apply my-3 overflow-x-auto rounded-lg bg-muted p-3; }
+  .prose-nexus a { @apply text-primary underline; }
+  .prose-nexus blockquote { @apply border-s-4 ps-3 text-muted-foreground; }
+}

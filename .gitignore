@@ -1,0 +1,35 @@
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Environment & secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.cer
+*.crt
+apple-developer-merchantid-domain-association*
+!apps/web/public/.well-known/README.md
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Test artifacts
+playwright-report/
+test-results/
+supabase/.temp/
+supabase/.branches/

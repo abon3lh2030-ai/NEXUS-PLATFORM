@@ -1,0 +1,7 @@
+{
+  "name": "@nexus/config",
+  "version": "0.1.0",
+  "private": true,
+  "files": ["theme.css", "tsconfig.react.json"],
+  "exports": { "./theme.css": "./theme.css", "./tsconfig.react.json": "./tsconfig.react.json" }
+}
