@@ -86,7 +86,7 @@ export function LandingPage() {
         <div className="grid-bg absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
           <Reveal className="mx-auto max-w-4xl text-center">
-            <Badge tone="primary" className="mb-6 px-3 py-1 text-xs">🇸🇦 {t('landing.badge')}</Badge>
+            <Badge tone="primary" className="mb-6 px-3 py-1 text-xs">{t('landing.badge')}</Badge>
             <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
               {t('landing.titleA')} <span className="brand-text">{t('landing.titleB')}</span>
             </h1>
