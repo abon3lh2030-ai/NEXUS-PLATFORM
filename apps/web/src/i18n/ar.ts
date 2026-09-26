@@ -393,6 +393,7 @@ export const ar = {
     kinds: { ai: 'الذكاء الاصطناعي', computer: 'الأجهزة الافتراضية', email: 'البريد', calendar: 'التقويم', meetings: 'الاجتماعات', voice: 'الصوت' },
     sendModes: { draft_only: 'مسودات فقط', draft_onlyHint: 'الموظف يكتب والإنسان يرسل.', approval_required: 'بموافقة', approval_requiredHint: 'كل رسالة تحتاج موافقة المدير.', autonomous: 'مستقل', autonomousHint: 'يرسل داخليًا ضمن السياسة؛ الخارجي والحساس بموافقة.' },
   },
+  contact: { cr: 'السجل التجاري', whatsapp: 'واتساب', whatsappSupport: 'تواصل مع الدعم عبر واتساب', whatsappMessage: 'السلام عليكم، أحتاج مساعدة بخصوص منصة NEXUS.' },
   notFound: { title: 'الصفحة غير موجودة', body: 'ربما نُقلت الصفحة أو أن الرابط غير صحيح.', home: 'العودة للرئيسية' },
   pricing: {
     title: 'أسعار سنوية واضحة', subtitle: 'اختر الباقة المناسبة لحجم شركتك. الاشتراك سنوي فقط.', popular: 'الأكثر شعبية', custom: 'مخصص',

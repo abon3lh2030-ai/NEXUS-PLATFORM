@@ -84,3 +84,19 @@ test('dark theme can be selected', async ({ page, isMobile }) => {
   await page.getByRole('menuitem', { name: 'داكن' }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
 });
+
+test('footer shows CR, email, phone and WhatsApp; floating WhatsApp opens a support chat', async ({ page }) => {
+  await page.goto('/');
+  const contact = page.getByTestId('footer-contact');
+  await expect(contact).toContainText('7055047331');
+  await expect(contact).toContainText('abdullahfah2030@hotmail.com');
+  await expect(contact).toContainText('+966 54 416 0181');
+  await expect(contact.getByRole('link', { name: /واتساب/ })).toHaveAttribute('href', /^https:\/\/wa\.me\/966544160181\?text=/);
+  const fab = page.getByRole('link', { name: 'تواصل مع الدعم عبر واتساب' });
+  await expect(fab).toBeVisible();
+  await expect(fab).toHaveAttribute('href', /^https:\/\/wa\.me\/966544160181/);
+  await expect(fab).toHaveAttribute('target', '_blank');
+  const box = await fab.boundingBox();
+  const vw = page.viewportSize()!.width;
+  expect(box!.x).toBeLessThan(vw / 2); // bottom-LEFT corner, even in RTL
+});

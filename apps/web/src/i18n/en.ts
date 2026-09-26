@@ -395,6 +395,7 @@ export const en: typeof ar = {
     kinds: { ai: 'AI', computer: 'Virtual computers', email: 'Email', calendar: 'Calendar', meetings: 'Meetings', voice: 'Voice' },
     sendModes: { draft_only: 'Drafts only', draft_onlyHint: 'The employee writes; a human sends.', approval_required: 'With approval', approval_requiredHint: 'Every email needs manager approval.', autonomous: 'Autonomous', autonomousHint: 'Sends internally within policy; external and sensitive need approval.' },
   },
+  contact: { cr: 'Commercial Registration', whatsapp: 'WhatsApp', whatsappSupport: 'Chat with support on WhatsApp', whatsappMessage: 'Hello, I need help with the NEXUS platform.' },
   notFound: { title: 'Page not found', body: 'The page may have moved or the link is incorrect.', home: 'Back to home' },
   pricing: {
     title: 'Clear annual pricing', subtitle: 'Choose the plan that fits your company. Annual billing only.', popular: 'Most popular', custom: 'Custom',

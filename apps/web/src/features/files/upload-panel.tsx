@@ -13,7 +13,7 @@ export function UploadPanel({ items, onCancel, onRetry, onClear }: { items: Uplo
   if (items.length === 0) return null;
   const active = items.filter((i) => i.status === 'uploading' || i.status === 'processing').length;
   return (
-    <div className="fixed bottom-4 end-4 z-40 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border bg-popover shadow-2xl" role="status" aria-live="polite">
+    <div className="fixed bottom-4 right-4 z-40 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border bg-popover shadow-2xl" role="status" aria-live="polite">
       <div className="flex items-center justify-between border-b px-4 py-3">
         <p className="text-sm font-semibold">{active > 0 ? t('files.uploadingCount', { count: active }) : t('files.uploadsDone')}</p>
         {active === 0 && <Button variant="ghost" size="icon-sm" onClick={onClear} aria-label={t('common.close')}><X /></Button>}

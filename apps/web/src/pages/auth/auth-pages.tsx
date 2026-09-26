@@ -10,6 +10,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { z } from 'zod';
 import { ErrorNotice, LanguageToggle, Logo, ThemeToggle, useErrorMessage } from '@/components/common';
 import { FullPageLoader } from '@/components/guards';
+import { WhatsAppButton } from '@/components/whatsapp';
 import { api } from '@/lib/api';
 import { env } from '@/lib/env';
 import { orgStore } from '@/lib/org-store';
@@ -33,6 +34,7 @@ function AuthShell({ title, subtitle, children, footer }: { title: string; subti
           {footer && <div className="mt-6 text-center text-sm text-muted-foreground">{footer}</div>}
         </div>
       </div>
+      <WhatsAppButton />
     </div>
   );
 }

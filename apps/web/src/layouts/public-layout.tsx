@@ -1,10 +1,12 @@
 import { Button, Dialog, SheetContent } from '@nexus/ui';
-import { Menu } from 'lucide-react';
+import { FileBadge, Mail, Menu, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { LanguageToggle, Logo, ThemeToggle } from '@/components/common';
 import { useSession } from '@/providers/session';
+import { WhatsAppButton, WhatsAppIcon } from '@/components/whatsapp';
+import { formatSaudiPhone, SITE_CONTACT, whatsappLink } from '@/config/site';
 
 const LINKS = [
   { to: '/platform', key: 'platform' },
@@ -65,6 +67,7 @@ export function PublicLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
+      <WhatsAppButton />
       <footer className="border-t bg-surface/50">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
           <div className="md:col-span-2">
@@ -84,7 +87,36 @@ export function PublicLayout() {
             <Link to="/terms" className="text-muted-foreground hover:text-foreground">{t('public.terms.title')}</Link>
           </div>
         </div>
-        <div className="border-t py-5 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} NEXUS. {t('public.footer.rights')}</div>
+        <div className="border-t">
+          <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 sm:px-6 lg:flex-row lg:justify-between">
+            <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground" data-testid="footer-contact">
+              <li className="flex items-center gap-2">
+                <FileBadge className="size-4 shrink-0" />
+                <span>{t('contact.cr')}:</span>
+                <span className="font-medium text-foreground" dir="ltr">{SITE_CONTACT.commercialRegistration}</span>
+              </li>
+              <li>
+                <a href={`mailto:${SITE_CONTACT.email}`} className="flex items-center gap-2 hover:text-foreground">
+                  <Mail className="size-4 shrink-0" />
+                  <span className="font-medium text-foreground" dir="ltr">{SITE_CONTACT.email}</span>
+                </a>
+              </li>
+              <li>
+                <a href={`tel:+${SITE_CONTACT.phone}`} className="flex items-center gap-2 hover:text-foreground">
+                  <Phone className="size-4 shrink-0" />
+                  <span className="font-medium text-foreground" dir="ltr">{formatSaudiPhone(SITE_CONTACT.phone)}</span>
+                </a>
+              </li>
+              <li>
+                <a href={whatsappLink(t('contact.whatsappMessage'))} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground">
+                  <WhatsAppIcon className="size-4 shrink-0 text-[#25D366]" />
+                  <span className="font-medium text-foreground">{t('contact.whatsapp')}</span>
+                </a>
+              </li>
+            </ul>
+            <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} NEXUS. {t('public.footer.rights')}</p>
+          </div>
+        </div>
       </footer>
     </div>
   );

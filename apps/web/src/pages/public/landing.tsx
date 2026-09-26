@@ -173,7 +173,7 @@ export function LandingPage() {
             <h2 className="text-3xl font-semibold tracking-tight">{t('landing.finalTitle')}</h2>
             <p className="mx-auto mt-3 max-w-xl text-white/85">{t('landing.finalSubtitle')}</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg" className="bg-white text-foreground hover:bg-white/90"><Link to="/signup">{t('landing.ctaPrimary')}</Link></Button>
+              <Button asChild size="lg" className="bg-white text-slate-900 hover:bg-white/90"><Link to="/signup">{t('landing.ctaPrimary')}</Link></Button>
               <Button asChild size="lg" variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10"><Link to="/pricing">{t('public.nav.pricing')}</Link></Button>
             </div>
             <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-white/85">
