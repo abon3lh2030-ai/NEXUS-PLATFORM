@@ -9,6 +9,7 @@ import { enterpriseApprovedEmail, enterpriseRejectedEmail, enterpriseRequestEmai
 import type { EntitlementService } from './entitlements.js';
 import type { NotificationService } from './notifications.js';
 
+const ENTERPRISE_AI_BUDGET_SHARE = 0.4;
 const OFFER_TTL_DAYS = 30;
 
 /** Public forms + super-admin operations (platform level, not organization level). */
@@ -153,6 +154,10 @@ export class PlatformService {
     if (!input.price_sar) throw badRequest('price_required');
     const base = await this.entitlements.getPlan('enterprise');
     const entitlements = { ...(base?.entitlements ?? {}), ...(input.entitlements ?? {}) };
+    // An enterprise offer is never AI-unlimited by accident: default AI budget = 40% of the price.
+    if (entitlements.ai_budget_halalas_per_year === undefined || entitlements.ai_budget_halalas_per_year === null) {
+      entitlements.ai_budget_halalas_per_year = Math.round(input.price_sar * 100 * ENTERPRISE_AI_BUDGET_SHARE);
+    }
     const offer = unwrap(
       await this.db
         .from('enterprise_offers')

@@ -70,7 +70,7 @@ export const en: typeof ar = {
     invalid_token: 'Your session ended — please sign in again.', forbidden: "You don't have permission to do this.", missing_permission: "You don't have the required permission.",
     validation_failed: 'Some data is invalid — please review and try again.', rate_limited: 'Too many requests — please wait a moment.', internal_error: 'Internal server error.',
     route_not_found: 'Route not found.', bad_request: 'Invalid request.', subscription_required: 'This feature requires an active annual subscription.',
-    subscription_inactive: 'Subscription is not active.', feature_not_in_plan: 'This feature is not included in your current plan.', plan_limit_reached: "You've reached your plan limit.",
+    subscription_inactive: 'Subscription is not active.', feature_not_in_plan: 'This feature is not included in your current plan.', plan_limit_reached: "You've reached your plan limit.", ai_budget_exhausted: "Your plan's annual AI allowance is used up. Upgrade or contact us to add more.", model_not_in_plan: 'This model is not available on your current plan.',
     super_admin_required: 'This page is for platform administrators only.', organization_not_found: "Organization not found or you don't have access.", organization_closed: 'This organization is closed.',
     organization_suspended: 'This organization is suspended.', organization_header_required: 'Select an organization first.', organization_inactive: 'Organization is inactive.', organization_not_active: 'Organization is inactive.',
     commercial_registration_already_registered: 'This Commercial Registration number is already registered.', confirmation_name_mismatch: "The company name doesn't match.", owner_only: 'Only the owner can do this.',
@@ -332,7 +332,7 @@ export const en: typeof ar = {
   billing: {
     description: 'Annual billing only.', current: 'Current subscription', startedAt: 'Started', endsAt: 'Ends', interval: 'Billing interval',
     yearly: 'Yearly', renewNote: 'Renewing early adds a full year to your current end date — no remaining days are lost.', usage: 'Usage',
-    usageAfterSubscribe: 'Usage appears once your subscription is active.', computerMinutes: 'Virtual computer minutes', plans: 'Annual plans',
+    usageAfterSubscribe: 'Usage appears once your subscription is active.', computerMinutes: 'Virtual computer minutes', aiBudget: 'Annual AI allowance', aiBudgetHint: 'Charged at the actual cost of every AI action (AI employees, Nexus AI, meetings, presentations). When it runs out, AI features pause until renewal or upgrade; the rest of the platform keeps working.', plans: 'Annual plans',
     plansHint: "Prices are set by the server and can't be changed from the browser.", paymentsNotConfigured: "The Moyasar payment gateway isn't connected in this environment yet.",
     subscribe: 'Subscribe', renew: 'Renew', history: 'Payment history', noPayments: 'No payments', plan: 'Plan', amount: 'Amount', method: 'Method',
     checkoutTitle: 'Checkout', secureNote: 'Card details are processed by Moyasar directly and never touch NEXUS servers. Your subscription activates after server-side verification.',
@@ -350,7 +350,7 @@ export const en: typeof ar = {
     signups30d: '{{count}} signups in 30 days', last30: 'Last 30 days: {{value}}', runningSessions: '{{count}} running sessions', aiCost30d: 'AI cost (30 days)',
     computerMinutes: 'Computer minutes (30 days)', pendingApplications: 'Pending registrations', pendingEnterprise: 'Pending enterprise requests', applicationTitle: 'Organization registration',
     applicant: 'Applicant', decision: 'Decision', notePlaceholder: 'Note (optional)', verify: 'Verify organization', enterpriseTitle: 'Enterprise request', requestDetails: 'Request details',
-    intentNotice: 'You opened this page from an email link. No decision is taken until you confirm here.', priceSar: 'Custom annual price (SAR)', storageGb: 'Storage (GB)',
+    intentNotice: 'You opened this page from an email link. No decision is taken until you confirm here.', priceSar: 'Custom annual price (SAR)', storageGb: 'Storage (GB)', aiBudgetSar: 'Annual AI allowance (SAR)', aiBudgetHint: 'Leave empty to default to 40% of the price.',
     noteToCustomer: 'Note to customer', approveAndSend: 'Approve & send offer', offers: 'Offers',
     nav: { dashboard: 'Overview', applications: 'Registrations', enterprise: 'Enterprise requests', organizations: 'Organizations', payments: 'Payments' },
   },
@@ -400,8 +400,8 @@ export const en: typeof ar = {
   pricing: {
     title: 'Clear annual pricing', subtitle: 'Choose the plan that fits your company. Annual billing only.', popular: 'Most popular', custom: 'Custom',
     year: 'year', annualOnly: 'Billed annually only', unlimited: 'Unlimited', humans: 'Human members', aiEmployees: 'AI employees', projects: 'Active projects',
-    executions: 'AI executions per year', storage: 'Storage', requestCustom: 'Request a custom plan', notesTitle: 'Notes',
-    notes: ['Prices are in Saudi Riyals and billed annually.', 'The platform is currently available only to companies registered in Saudi Arabia.', 'Renewing early never loses remaining days.', 'When a subscription expires, paid access stops immediately and all data is kept.'],
+    executions: 'AI executions per year', storage: 'Storage', aiModel: 'AI model', requestCustom: 'Request a custom plan', notesTitle: 'Notes',
+    notes: ['Prices are in Saudi Riyals and billed annually.', 'The platform is currently available only to companies registered in Saudi Arabia.', 'Renewing early never loses remaining days.', 'Every plan includes an annual AI allowance shown on the billing page, charged at the actual cost of the work performed.', 'When a subscription expires, paid access stops immediately and all data is kept.'],
   },
   public: {
     getStarted: 'Get started', openApp: 'Open platform', legalUpdated: 'Last updated: September 2026',

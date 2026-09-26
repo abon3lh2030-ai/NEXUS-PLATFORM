@@ -18,6 +18,7 @@ const EMPTY: Entitlements = {
   max_file_size_bytes: 0,
   concurrent_ai_sessions: 0,
   computer_minutes_per_year: 0,
+  ai_budget_halalas_per_year: 0,
   features: [],
 };
 
@@ -31,7 +32,11 @@ export interface BillingState {
 export class EntitlementService {
   private planCache: { at: number; plans: PlanRow[] } | null = null;
 
-  constructor(private readonly db: Db) {}
+  constructor(
+    private readonly db: Db,
+    private readonly usdToSar = 3.75,
+    private readonly fallbackModel = 'claude-sonnet-5',
+  ) {}
 
   async listPlans(): Promise<PlanRow[]> {
     if (this.planCache && Date.now() - this.planCache.at < 60_000) return this.planCache.plans;
@@ -99,7 +104,51 @@ export class EntitlementService {
       concurrent_ai_sessions: sessions.count ?? 0,
       ai_executions_per_year: counterMap.get('ai_executions') ?? 0,
       computer_minutes_per_year: Math.ceil((counterMap.get('computer_seconds') ?? 0) / 60),
+      ai_budget_halalas_per_year: this.microUsdToHalalas(counterMap.get('ai_cost_micro_usd') ?? 0),
     };
+  }
+
+  private microUsdToHalalas(microUsd: number): number {
+    return Math.ceil((microUsd / 1_000_000) * this.usdToSar * 100);
+  }
+
+  /** Models the plan may use; the first one is the plan default. */
+  allowedModels(state: BillingState): string[] {
+    const models = state.plan?.ai_models ?? [];
+    return models.length > 0 ? models : [this.fallbackModel];
+  }
+
+  /** The requested model if the plan allows it, otherwise the plan default (handles downgrades too). */
+  resolveModel(state: BillingState, requested?: string | null): string {
+    const allowed = this.allowedModels(state);
+    return requested && allowed.includes(requested) ? requested : allowed[0]!;
+  }
+
+  /** AI spend so far in the current period (SAR halalas), from the trigger-maintained meter. */
+  async aiSpendHalalas(orgId: string, state: BillingState): Promise<number> {
+    const { data } = await this.db
+      .from('usage_counters')
+      .select('value')
+      .eq('organization_id', orgId)
+      .eq('metric', 'ai_cost_micro_usd')
+      .eq('period_start', this.periodStart(state))
+      .maybeSingle<{ value: number }>();
+    return this.microUsdToHalalas(Number(data?.value ?? 0));
+  }
+
+  /**
+   * Gate in front of EVERY AI call: subscription must be active and the annual AI budget not used
+   * up. Returns the model to use (the requested one if the plan allows it, else the plan default).
+   */
+  async aiGate(orgId: string, requestedModel?: string | null): Promise<{ model: string; state: BillingState }> {
+    const state = await this.getBillingState(orgId);
+    if (!state.active) throw paymentRequired('subscription_required');
+    const budget = state.entitlements.ai_budget_halalas_per_year;
+    if (budget !== null && budget !== undefined) {
+      const spent = await this.aiSpendHalalas(orgId, state);
+      if (spent >= budget) throw paymentRequired('ai_budget_exhausted', { limit: budget, current: spent });
+    }
+    return { model: this.resolveModel(state, requestedModel), state };
   }
 
   /** Throws 402 if adding `increment` would exceed a countable entitlement. */

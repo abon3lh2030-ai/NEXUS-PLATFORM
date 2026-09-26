@@ -28,7 +28,7 @@ const EnvSchema = z
 
     AI_PROVIDER: z.enum(['anthropic', 'mock']).default('anthropic'),
     ANTHROPIC_API_KEY: z.string().optional(),
-    AI_DEFAULT_MODEL: z.string().default('claude-opus-5'),
+    AI_DEFAULT_MODEL: z.string().default('claude-sonnet-5'),
     AI_EFFORT: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).default('medium'),
     USD_TO_SAR_RATE: z.coerce.number().positive().default(3.75),
 

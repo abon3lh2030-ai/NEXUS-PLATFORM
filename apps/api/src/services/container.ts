@@ -74,7 +74,7 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const audit = new AuditService(db);
   const notifications = new NotificationService(db);
   const email = new EmailService(createEmailProvider(env, log), db, log);
-  const entitlements = new EntitlementService(db);
+  const entitlements = new EntitlementService(db, env.USD_TO_SAR_RATE);
   const files = new FileService(env, db, entitlements, audit, new NoopScanner());
   const computer: ComputerProvider = env.COMPUTER_PROVIDER === 'e2b' ? createE2BProvider() : new StorageWorkspaceComputerProvider(db, files);
   // Digital office (constructed after the runtime; the runtime resolves it lazily).
@@ -90,13 +90,13 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const work = new WorkService(db, entitlements, audit, notifications, agents);
   const orgs = new OrganizationService(env, db, email, audit, notifications);
   const insights = new InsightsService(db);
-  const nexusAi = new NexusAiService(db, ai, work, agents, insights);
+  const nexusAi = new NexusAiService(db, ai, work, agents, insights, entitlements);
   const platform = new PlatformService(env, db, email, audit, notifications, entitlements);
-  const presentations = new PresentationService(db, ai, files, notifications, audit);
+  const presentations = new PresentationService(db, ai, files, notifications, audit, entitlements);
   const mail = new MailService(env, db, email, notifications, audit);
   const meetingProvider: MeetingProvider = env.MEETING_PROVIDER === 'recall' && env.RECALL_API_KEY ? new RecallMeetingProvider(env.RECALL_API_KEY, env.RECALL_REGION) : new NexusMeetingProvider();
   const voice: VoiceProvider = env.VOICE_PROVIDER === 'elevenlabs' && env.ELEVENLABS_API_KEY ? new ElevenLabsVoiceProvider(env.ELEVENLABS_API_KEY, env.ELEVENLABS_DEFAULT_VOICE_ID) : new NoVoiceProvider();
-  const office = new OfficeService(db, ai, new NexusCalendarProvider(), meetingProvider, voice, mail, work, notifications, audit);
+  const office = new OfficeService(db, ai, new NexusCalendarProvider(), meetingProvider, voice, mail, work, notifications, audit, entitlements);
   officeTools = { presentations, mail, office };
-  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work), presentations, mail, office };
+  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office };
 }

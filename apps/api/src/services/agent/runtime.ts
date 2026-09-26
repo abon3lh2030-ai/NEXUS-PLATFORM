@@ -141,6 +141,8 @@ export class AgentRuntime implements DelegationPort {
       if ((active ?? []).length > 0) throw conflict('task_already_running');
     }
 
+    // AI budget must not be used up before an execution is consumed.
+    await this.d.entitlements.aiGate(p.orgId);
     // Metered: one AI execution per work session (atomic, server-side).
     await this.d.entitlements.consumeExecution(p.orgId, p.billing);
 
@@ -156,7 +158,7 @@ export class AgentRuntime implements DelegationPort {
         current_step: 'Task received',
         priority: p.priority ?? 2,
         provider: this.d.ai.name,
-        model: this.d.ai.isMock ? this.d.ai.defaultModel : employee.model,
+        model: this.d.ai.isMock ? this.d.ai.defaultModel : this.d.entitlements.resolveModel(p.billing, employee.model),
         requested_by_user_id: p.requestedByUserId ?? null,
         requested_by_ai_employee_id: p.requestedByAiEmployeeId ?? null,
       })
@@ -466,9 +468,13 @@ export class AgentRuntime implements DelegationPort {
         const costSarHalalas = Number(fresh?.estimated_cost_usd ?? 0) * this.d.env.USD_TO_SAR_RATE * 100;
         if (costSarHalalas > AI_SAFETY_LIMITS.maxCostHalalasPerSession) throw new AppError(429, 'cost_limit_reached');
 
+        // --- annual AI budget + plan model (re-checked before every model call) ---
+        const gate = await this.d.entitlements.aiGate(s.organization_id, s.model);
+        const model = this.d.ai.isMock ? s.model : gate.model;
+
         // --- LLM → structured output (Zod-validated) ---
         await this.setEmployeeStatus(s.organization_id, s.ai_employee_id, 'thinking');
-        const { data: step, usage } = await this.callModel(s, system, state.messages);
+        const { data: step, usage } = await this.callModel(s, model, system, state.messages);
         await this.recordUsage(s, usage, steps + 1);
         state.messages.push({ role: 'assistant', content: JSON.stringify(step) });
 
@@ -525,11 +531,11 @@ export class AgentRuntime implements DelegationPort {
     }
   }
 
-  private async callModel(s: WorkSessionRow, system: string, messages: ChatMessage[]): Promise<{ data: AgentStep; usage: AIUsage }> {
+  private async callModel(_s: WorkSessionRow, model: string, system: string, messages: ChatMessage[]): Promise<{ data: AgentStep; usage: AIUsage }> {
     let attempt = 0;
     for (;;) {
       try {
-        return await this.d.ai.generateStructured({ system, messages, schema: agentStepSchema, schemaName: 'agent_step', model: s.model, maxTokens: AI_SAFETY_LIMITS.maxOutputTokensPerStep * 4 });
+        return await this.d.ai.generateStructured({ system, messages, schema: agentStepSchema, schemaName: 'agent_step', model, maxTokens: AI_SAFETY_LIMITS.maxOutputTokensPerStep * 4 });
       } catch (err) {
         const retryable = err instanceof AIProviderError && (err.retryable || err.code === 'invalid_output');
         if (!retryable || attempt >= AI_SAFETY_LIMITS.maxRetries) throw err;

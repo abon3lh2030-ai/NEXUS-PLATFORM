@@ -5,6 +5,7 @@ import { AppError, forbidden, notFound } from '../../lib/errors.js';
 import type { Db } from '../../lib/supabase.js';
 import type { AIProvider, AIUsage, ChatMessage } from '../ai/provider.js';
 import type { AgentRuntime } from '../agent/runtime.js';
+import type { EntitlementService } from '../entitlements.js';
 import type { InsightsService } from '../insights.js';
 import type { WorkService } from '../work-service.js';
 
@@ -45,6 +46,7 @@ export class NexusAiService {
     private readonly work: WorkService,
     private readonly agents: AgentRuntime,
     private readonly insights: InsightsService,
+    private readonly entitlements: EntitlementService,
   ) {}
 
   async listConversations(actor: OrgActor) {
@@ -81,7 +83,8 @@ export class NexusAiService {
     let lastUsage: AIUsage | null = null;
 
     for (let step = 0; step < MAX_STEPS; step++) {
-      const { data, usage } = await this.ai.generateStructured({ system, messages, schema: nexusStepSchema, schemaName: 'nexus_step' });
+      const { model } = await this.entitlements.aiGate(actor.orgId);
+      const { data, usage } = await this.ai.generateStructured({ system, messages, model, schema: nexusStepSchema, schemaName: 'nexus_step' });
       totalIn += usage.inputTokens;
       totalOut += usage.outputTokens;
       lastUsage = usage;

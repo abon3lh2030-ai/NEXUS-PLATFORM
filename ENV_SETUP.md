@@ -51,7 +51,7 @@
 |---|---|
 | `AI_PROVIDER` | القيمة `anthropic` في الإنتاج. القيمة `mock` للتطوير والاختبار فقط، وهي مرفوضة في الإنتاج، ومخرجاتها معلّمة `[MOCK]`. |
 | `ANTHROPIC_API_KEY` | من [console.anthropic.com](https://console.anthropic.com) → API Keys |
-| `AI_DEFAULT_MODEL` | الافتراضي `claude-opus-5`. يمكن اختيار نموذج لكل موظف من الواجهة. |
+| `AI_DEFAULT_MODEL` | الافتراضي `claude-sonnet-5`. النموذج الفعلي يحدده الباقة: الأساسية والاحترافية Sonnet 5 (أو Haiku)، الأعمال Sonnet 5 أو Opus 5، المؤسسات كل النماذج. لكل باقة رصيد سنوي لتكلفة الذكاء الاصطناعي يوقف الاستخدام عند نفاده (402 `ai_budget_exhausted`). |
 | `AI_EFFORT` | مستوى الجهد: `low` أو `medium` أو `high`… الافتراضي `medium` لتوازن التكلفة والجودة. |
 | `USD_TO_SAR_RATE` | سعر الصرف المستخدم لعرض التكلفة التقديرية بالريال. |
 

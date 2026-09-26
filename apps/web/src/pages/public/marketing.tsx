@@ -110,6 +110,16 @@ export function AiWorkforcePublicPage() {
   );
 }
 
+/** Human-readable name of a Claude model id (e.g. claude-sonnet-5 → Claude Sonnet 5). */
+export function modelLabel(id: string | undefined): string {
+  if (!id) return '—';
+  return id
+    .replace(/^claude-/, 'Claude ')
+    .replace(/-(\d+)-(\d+)$/, ' $1.$2')
+    .replace(/-(\d+)$/, ' $1')
+    .replace(/(^|\s)([a-z])/g, (_m, s: string, c: string) => s + c.toUpperCase());
+}
+
 export function PlanCards({ plans, onSelect, currentPlan, busyPlan, actionLabel }: { plans: PublicPlan[]; onSelect?: (code: string) => void; currentPlan?: string | null; busyPlan?: string | null; actionLabel?: string }) {
   const { t } = useTranslation();
   return (
@@ -123,6 +133,7 @@ export function PlanCards({ plans, onSelect, currentPlan, busyPlan, actionLabel 
           [t('pricing.projects'), limit(e.active_projects)],
           [t('pricing.executions'), limit(e.ai_executions_per_year)],
           [t('pricing.storage'), e.storage_bytes === null ? t('pricing.unlimited') : formatBytes(e.storage_bytes)],
+          [t('pricing.aiModel'), modelLabel(p.ai_models?.[0])],
         ];
         return (
           <div key={p.code} className={cn('relative flex flex-col rounded-2xl border bg-card p-6 shadow-xs', p.is_popular && 'border-primary shadow-lg shadow-primary/10 ring-1 ring-primary')}>

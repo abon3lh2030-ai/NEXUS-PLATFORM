@@ -372,6 +372,7 @@ export const adminEnterpriseDecisionSchema = z.object({
       max_file_size_bytes: z.number().int().min(1).nullable(),
       concurrent_ai_sessions: z.number().int().min(1).nullable(),
       computer_minutes_per_year: z.number().int().min(0).nullable(),
+      ai_budget_halalas_per_year: z.number().int().min(0).nullable().optional(),
     })
     .optional(),
   note: text(4000).optional().default(''),

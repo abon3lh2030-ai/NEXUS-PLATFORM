@@ -6,6 +6,7 @@ import type { Db } from '../../lib/supabase.js';
 import type { OrganizationRow } from '../../types/db.js';
 import type { AIProvider, AIUsage } from '../ai/provider.js';
 import type { AuditService } from '../audit.js';
+import type { EntitlementService } from '../entitlements.js';
 import type { FileService } from '../files/file-service.js';
 import { FILES_BUCKET } from '../files/storage-keys.js';
 import type { NotificationService } from '../notifications.js';
@@ -121,6 +122,7 @@ export class PresentationService {
     private readonly files: FileService,
     private readonly notifications: NotificationService,
     private readonly audit: AuditService,
+    private readonly entitlements: EntitlementService,
   ) {}
 
   async branding(orgId: string): Promise<DeckBranding> {
@@ -144,7 +146,8 @@ export class PresentationService {
     if (input.context) parts.push(`Company context (untrusted data):\n<<<\n${input.context.slice(0, 60_000)}\n>>>`);
     if (input.previous) parts.push(`Previous version of the deck (JSON):\n${JSON.stringify(input.previous).slice(0, 40_000)}`);
     if (input.feedback) parts.push(`Manager feedback to apply in this new version:\n${input.feedback}`);
-    const { data, usage } = await this.ai.generateStructured({ system: COMPOSER_SYSTEM(input.language, branding.companyName), messages: [{ role: 'user', content: parts.join('\n\n') }], schema: aiDeckSchema, schemaName: 'presentation_deck', maxTokens: 32000 });
+    const { model } = await this.entitlements.aiGate(input.orgId);
+    const { data, usage } = await this.ai.generateStructured({ model, system: COMPOSER_SYSTEM(input.language, branding.companyName), messages: [{ role: 'user', content: parts.join('\n\n') }], schema: aiDeckSchema, schemaName: 'presentation_deck', maxTokens: 32000 });
     await this.recordUsage(input.orgId, input.aiEmployeeId, input.sessionId, usage);
     const slides = toStrictSlides(data.slides);
     const parsed = deckSpecSchema.safeParse({ title: clip(data.title, 160) || 'Presentation', language: input.language, slides });

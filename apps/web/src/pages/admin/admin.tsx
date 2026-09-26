@@ -129,7 +129,7 @@ export function AdminEnterpriseDetail() {
   const [params] = useSearchParams();
   const [price, setPrice] = useState('');
   const [note, setNote] = useState('');
-  const [limits, setLimits] = useState({ human_members: '', ai_employees: '', ai_executions_per_year: '', storage_gb: '' });
+  const [limits, setLimits] = useState({ human_members: '', ai_employees: '', ai_executions_per_year: '', storage_gb: '', ai_budget_sar: '' });
   const { data } = useQuery({ queryKey: ['admin-ent', id], queryFn: () => api<EnterpriseRequest>(`/admin/enterprise-requests/${id}`, { org: false }) });
   const num = (v: string) => (v.trim() === '' ? null : Number(v));
   const decide = useAction(
@@ -140,7 +140,7 @@ export function AdminEnterpriseDetail() {
         ...(decision === 'approve'
           ? {
               price_sar: Number(price),
-              entitlements: { human_members: num(limits.human_members), ai_employees: num(limits.ai_employees), ai_executions_per_year: num(limits.ai_executions_per_year), storage_bytes: limits.storage_gb ? Number(limits.storage_gb) * 1024 ** 3 : null, active_projects: null, max_file_size_bytes: 262144000, concurrent_ai_sessions: 20, computer_minutes_per_year: null },
+              entitlements: { human_members: num(limits.human_members), ai_employees: num(limits.ai_employees), ai_executions_per_year: num(limits.ai_executions_per_year), storage_bytes: limits.storage_gb ? Number(limits.storage_gb) * 1024 ** 3 : null, active_projects: null, max_file_size_bytes: 262144000, concurrent_ai_sessions: 20, computer_minutes_per_year: null, ai_budget_halalas_per_year: limits.ai_budget_sar.trim() === '' ? null : Math.round(Number(limits.ai_budget_sar) * 100) },
             }
           : {}),
       }),
@@ -178,6 +178,7 @@ export function AdminEnterpriseDetail() {
               <Field label={t('pricing.aiEmployees')}><Input type="number" placeholder="∞" value={limits.ai_employees} onChange={(e) => setLimits({ ...limits, ai_employees: e.target.value })} /></Field>
               <Field label={t('pricing.executions')}><Input type="number" placeholder="∞" value={limits.ai_executions_per_year} onChange={(e) => setLimits({ ...limits, ai_executions_per_year: e.target.value })} /></Field>
               <Field label={t('admin.storageGb')}><Input type="number" placeholder="∞" value={limits.storage_gb} onChange={(e) => setLimits({ ...limits, storage_gb: e.target.value })} /></Field>
+              <Field label={t('admin.aiBudgetSar')} hint={t('admin.aiBudgetHint')} className="sm:col-span-2"><Input type="number" min={0} placeholder={price ? String(Math.round(Number(price) * 0.4)) : ''} value={limits.ai_budget_sar} onChange={(e) => setLimits({ ...limits, ai_budget_sar: e.target.value })} dir="ltr" /></Field>
             </div>
             <Field className="mt-3" label={t('admin.noteToCustomer')}><Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
             <div className="mt-4 flex gap-2">

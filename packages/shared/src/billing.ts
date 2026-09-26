@@ -11,6 +11,8 @@ export const ENTITLEMENT_KEYS = [
   'max_file_size_bytes',
   'concurrent_ai_sessions',
   'computer_minutes_per_year',
+  /** Annual AI spend ceiling (estimated provider cost, SAR halalas). Every AI call is refused once used up. */
+  'ai_budget_halalas_per_year',
 ] as const;
 export type EntitlementKey = (typeof ENTITLEMENT_KEYS)[number];
 
@@ -46,6 +48,8 @@ export interface PublicPlan {
   is_popular: boolean;
   is_custom: boolean;
   entitlements: Entitlements;
+  /** AI models this plan may use; the first one is the default. */
+  ai_models: string[];
   sort_order: number;
 }
 
@@ -57,6 +61,7 @@ export interface UsageSnapshot {
   storage_bytes: number;
   concurrent_ai_sessions: number;
   computer_minutes_per_year: number;
+  ai_budget_halalas_per_year: number;
 }
 
 /**
