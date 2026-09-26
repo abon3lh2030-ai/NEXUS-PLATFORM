@@ -432,7 +432,7 @@ export const en: typeof ar = {
     },
   },
   landing: {
-    badge: 'Built for Saudi companies', titleA: 'Run your company with a team of', titleB: 'humans and AI employees',
+    badge: 'Built for Saudi companies', titleA: 'Run your company with a team of', titleB: 'AI employees',
     subtitle: 'NEXUS is a complete operating platform: AI employees that actually work with defined permissions and isolated virtual computers, plus company files, projects, tasks and decisions in one place.',
     ctaPrimary: 'Register your company', ctaSecondary: 'Explore the platform', ctaNote: 'Annual subscription',
     preview: {
