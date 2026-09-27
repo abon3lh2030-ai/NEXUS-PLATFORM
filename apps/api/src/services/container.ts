@@ -74,7 +74,7 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const audit = new AuditService(db);
   const notifications = new NotificationService(db);
   const email = new EmailService(createEmailProvider(env, log), db, log);
-  const entitlements = new EntitlementService(db, env.USD_TO_SAR_RATE);
+  const entitlements = new EntitlementService(db, env.USD_TO_SAR_RATE, env.AI_DEFAULT_MODEL);
   const files = new FileService(env, db, entitlements, audit, new NoopScanner());
   const computer: ComputerProvider = env.COMPUTER_PROVIDER === 'e2b' ? createE2BProvider() : new StorageWorkspaceComputerProvider(db, files);
   // Digital office (constructed after the runtime; the runtime resolves it lazily).

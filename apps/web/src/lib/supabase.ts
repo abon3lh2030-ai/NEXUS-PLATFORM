@@ -7,8 +7,6 @@ import { env } from './env';
  */
 export const supabase = createClient(env.supabaseUrl || 'http://localhost', env.supabaseAnonKey || 'missing', {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' },
-  // Resolve `fetch` at call time (lets the local demo mode intercept requests).
-  global: { fetch: (...args: Parameters<typeof fetch>) => fetch(...args) },
 });
 
 export async function getAccessToken(): Promise<string | null> {

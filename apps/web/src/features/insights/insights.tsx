@@ -6,11 +6,11 @@ import { BarChart3, Bell, Bot, Building2, Lock, Network, Users } from 'lucide-re
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { LoadingBlock, StatusBadge } from '@/components/common';
 import { HealthCard, type HealthReport } from '@/pages/app/dashboard';
 import { api, apiPost } from '@/lib/api';
-import { formatBytes, formatNumber, formatRelative, formatUsd } from '@/lib/format';
+import { formatBytes, formatNumber, formatRelative } from '@/lib/format';
 import { useSession } from '@/providers/session';
 import { useTheme } from '@/providers/theme';
 
@@ -65,8 +65,7 @@ export function AnalyticsPage() {
         icon={<BarChart3 />}
         actions={<div className="flex rounded-lg border p-0.5">{[7, 30, 90].map((d) => <Button key={d} size="sm" variant={days === d ? 'secondary' : 'ghost'} onClick={() => setDays(d)}>{t('analytics.days', { count: d })}</Button>)}</div>}
       />
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
-        <StatCard label={t('analytics.aiCost')} value={formatUsd(data.ai_cost_usd)} hint={t('ops.tokens', { count: data.ai_tokens })} />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label={t('analytics.docs')} value={formatNumber(data.documents_created)} hint={t('analytics.byAi', { count: data.documents_by_ai })} />
         <StatCard label={t('analytics.turnaround')} value={data.approval_turnaround_hours === null ? '—' : t('analytics.hours', { count: data.approval_turnaround_hours })} hint={t('analytics.pending', { count: data.approvals_pending })} />
         <StatCard label={t('analytics.storage')} value={formatBytes(data.storage.used_bytes)} hint={t('files.fileCount', { count: data.storage.file_count })} />
@@ -96,12 +95,9 @@ export function AnalyticsPage() {
           <Section className="lg:col-span-3" title={t('analytics.advanced')}><p className="flex items-center gap-2 text-sm text-muted-foreground"><Lock className="size-4" /> {t('billing.featureLockedDescription')}</p></Section>
         ) : (
           <>
-            <Section className="lg:col-span-2" title={t('analytics.aiCostTrend')}>
-              <div className="h-56"><ResponsiveContainer><LineChart data={data.ai_cost_by_day}><CartesianGrid stroke={c.grid} vertical={false} /><XAxis dataKey="date" {...axis} /><YAxis {...axis} width={40} /><Tooltip /><Line type="monotone" dataKey="value" name="USD" stroke={c.series[1]} strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div>
-            </Section>
-            <Section title={t('analytics.aiProductivity')}>
-              <ul className="grid gap-2 text-sm">
-                {data.ai_productivity.map((a) => <li key={a.id} className="flex items-center gap-2"><Avatar name={a.name} square className="size-6" /><span className="flex-1 truncate">{a.name}</span><Badge tone="success">{a.completed}</Badge>{a.failed > 0 && <Badge tone="danger">{a.failed}</Badge>}<span className="w-14 text-end text-xs text-muted-foreground">{formatUsd(a.cost_usd)}</span></li>)}
+            <Section className="lg:col-span-3" title={t('analytics.aiProductivity')}>
+              <ul className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                {data.ai_productivity.map((a) => <li key={a.id} className="flex items-center gap-2"><Avatar name={a.name} square className="size-6" /><span className="flex-1 truncate">{a.name}</span><Badge tone="success">{a.completed}</Badge>{a.failed > 0 && <Badge tone="danger">{a.failed}</Badge>}</li>)}
                 {data.ai_productivity.length === 0 && <li className="text-muted-foreground">—</li>}
               </ul>
             </Section>

@@ -79,9 +79,9 @@ function MoyasarForm({ checkout }: { checkout: Checkout }) {
   );
 }
 
-function UsageRow({ label, used, limit, bytes, sar, hint }: { label: string; used: number; limit: number | null; bytes?: boolean; sar?: boolean; hint?: string }) {
+function UsageRow({ label, used, limit, bytes, percent, hint }: { label: string; used: number; limit: number | null; bytes?: boolean; percent?: boolean; hint?: string }) {
   const { t } = useTranslation();
-  const f = (n: number) => (bytes ? formatBytes(n) : sar ? formatSar(n) : formatNumber(n));
+  const f = (n: number) => (bytes ? formatBytes(n) : percent ? `${formatNumber(n)}%` : formatNumber(n));
   const pct = limit ? Math.min(100, (used / limit) * 100) : 0;
   return (
     <div className="py-2">
@@ -148,7 +148,7 @@ export function BillingPage() {
               <UsageRow label={t('pricing.projects')} used={data.usage.active_projects} limit={e.active_projects} />
               <UsageRow label={t('pricing.storage')} used={data.usage.storage_bytes} limit={e.storage_bytes} bytes />
               <UsageRow label={t('billing.computerMinutes')} used={data.usage.computer_minutes_per_year} limit={e.computer_minutes_per_year} />
-              <div className="sm:col-span-2"><UsageRow label={t('billing.aiBudget')} used={data.usage.ai_budget_halalas_per_year} limit={e.ai_budget_halalas_per_year} sar hint={t('billing.aiBudgetHint')} /></div>
+              <div className="sm:col-span-2"><UsageRow label={t('billing.aiBudget')} used={e.ai_budget_halalas_per_year ? Math.min(100, Math.round((data.usage.ai_budget_halalas_per_year / e.ai_budget_halalas_per_year) * 100)) : 0} limit={e.ai_budget_halalas_per_year === null ? null : 100} percent hint={t('billing.aiBudgetHint')} /></div>
             </div>
           ) : <p className="text-sm text-muted-foreground">{t('billing.usageAfterSubscribe')}</p>}
         </Section>

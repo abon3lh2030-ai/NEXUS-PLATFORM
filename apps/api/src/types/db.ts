@@ -66,7 +66,6 @@ export interface PlanRow {
   is_custom: boolean;
   is_public: boolean;
   entitlements: Entitlements;
-  ai_models: string[];
   sort_order: number;
 }
 

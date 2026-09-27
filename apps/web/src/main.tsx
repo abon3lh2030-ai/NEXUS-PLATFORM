@@ -39,8 +39,7 @@ function ConfigNotice() {
   );
 }
 
-function render() {
-  createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {isConfigured ? (
       <ThemeProvider>
@@ -58,14 +57,3 @@ function render() {
     )}
   </StrictMode>,
 );
-}
-
-// Local demo mode (`npm run demo`) — dev server only; never included in production builds.
-if (import.meta.env.DEV && import.meta.env.VITE_DEMO_MODE === 'true') {
-  void import('./demo/install').then((m) => {
-    m.installDemo();
-    render();
-  });
-} else {
-  render();
-}

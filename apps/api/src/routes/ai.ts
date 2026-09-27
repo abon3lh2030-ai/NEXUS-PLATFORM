@@ -1,9 +1,8 @@
 import { aiEmployeePermissionsSchema, aiEmployeeSchema, assignAiTaskSchema, DEFAULT_AI_PERMISSIONS, managerInstructionSchema, sessionControlSchema } from '@nexus/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { badRequest, notFound, parse, paymentRequired, unwrap } from '../lib/errors.js';
+import { badRequest, notFound, parse, unwrap } from '../lib/errors.js';
 import { actorOf, orgGuard } from '../plugins/auth.js';
-import { SUPPORTED_MODELS } from '../services/ai/provider.js';
 import type { Services } from '../services/container.js';
 import type { AiEmployeeRow, WorkSessionRow } from '../types/db.js';
 import { idOf } from './helpers.js';
@@ -23,12 +22,6 @@ export async function aiRoutes(app: FastifyInstance, s: Services) {
     return data ?? [];
   });
 
-  // Only the models the organization's plan allows (first = plan default).
-  app.get('/ai/models', view, async (req) => {
-    const a = actorOf(req);
-    const models = s.ai.isMock ? [s.ai.defaultModel] : s.entitlements.allowedModels(a.billing).filter((m) => SUPPORTED_MODELS.includes(m));
-    return { default: models[0], models, provider: s.ai.name, is_mock: s.ai.isMock };
-  });
 
   app.get('/ai/employees', view, async (req) => {
     const a = actorOf(req);
@@ -50,9 +43,9 @@ export async function aiRoutes(app: FastifyInstance, s: Services) {
       permissions = t.default_permissions;
       if (!(req.body as Record<string, unknown>).autonomy) autonomy = t.default_autonomy;
     }
-    if (input.model && !s.entitlements.allowedModels(a.billing).includes(input.model)) throw paymentRequired('model_not_in_plan', { model: input.model });
-    const model = s.entitlements.resolveModel(a.billing, input.model);
-    const { model: _m, ...rest } = input;
+    // One platform-wide model; customers never choose it.
+    const model = s.entitlements.platformModel;
+    const rest = input;
     const employee = unwrap(
       await s.db
         .from('ai_employees')
@@ -86,8 +79,6 @@ export async function aiRoutes(app: FastifyInstance, s: Services) {
     const raw = (req.body ?? {}) as Record<string, unknown>;
     const parsed = parse(aiEmployeeSchema.partial().extend({ is_active: z.boolean().optional() }), raw) as Record<string, unknown>;
     const patch = Object.fromEntries(Object.entries(parsed).filter(([k]) => k in raw && k !== 'template_id'));
-    if (typeof patch.model === 'string' && !SUPPORTED_MODELS.includes(patch.model)) throw badRequest('unsupported_model');
-    if (typeof patch.model === 'string' && !s.entitlements.allowedModels(a.billing).includes(patch.model)) throw paymentRequired('model_not_in_plan', { model: patch.model });
     await s.work.assertRefs(a.orgId, { department_id: patch.department_id, owner_member_id: patch.manager_member_id });
     const row = unwrap(await s.db.from('ai_employees').update(patch).eq('id', employee.id).select('*').single());
     await s.audit.audit({ organizationId: a.orgId, actorType: 'human', actorUserId: a.userId, action: 'ai_employee.updated', targetType: 'ai_employee', targetId: employee.id, metadata: { fields: Object.keys(patch) } });

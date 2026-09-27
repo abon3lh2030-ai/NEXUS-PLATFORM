@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { KeyValue, Markdown, StatusBadge, useAction } from '@/components/common';
 import { api, apiPost } from '@/lib/api';
-import { durationBetween, formatDateTime, formatNumber, formatTime, formatUsd } from '@/lib/format';
+import { durationBetween, formatDateTime, formatTime } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session';
 import type { WorkSession } from './types';
@@ -94,9 +94,6 @@ export function SessionViewer({ sessionId, onClose }: { sessionId: string | null
             <div className="grid divide-y rounded-xl border px-4 sm:grid-cols-2 sm:divide-y-0">
               <KeyValue label={t('ai.started')}>{formatDateTime(s.started_at)}</KeyValue>
               <KeyValue label={t('ai.duration')}>{durationBetween(s.started_at, s.completed_at)}</KeyValue>
-              <KeyValue label={t('ai.model')}><span dir="ltr">{s.model}</span></KeyValue>
-              <KeyValue label={t('ai.tokens')}>{formatNumber(Number(s.input_tokens) + Number(s.output_tokens))}</KeyValue>
-              <KeyValue label={t('ai.estimatedCost')}>{formatUsd(Number(s.estimated_cost_usd))}</KeyValue>
               {s.error && <KeyValue label={t('ai.error')}><span className="text-destructive">{t(`errors.${s.error}`, s.error)}</span></KeyValue>}
             </div>
             <Tabs defaultValue="timeline">

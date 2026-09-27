@@ -35,7 +35,8 @@ export class EntitlementService {
   constructor(
     private readonly db: Db,
     private readonly usdToSar = 3.75,
-    private readonly fallbackModel = 'claude-sonnet-5',
+    /** The one AI model used platform-wide (AI_DEFAULT_MODEL). Customers never choose a model. */
+    readonly platformModel = 'claude-sonnet-5',
   ) {}
 
   async listPlans(): Promise<PlanRow[]> {
@@ -112,18 +113,6 @@ export class EntitlementService {
     return Math.ceil((microUsd / 1_000_000) * this.usdToSar * 100);
   }
 
-  /** Models the plan may use; the first one is the plan default. */
-  allowedModels(state: BillingState): string[] {
-    const models = state.plan?.ai_models ?? [];
-    return models.length > 0 ? models : [this.fallbackModel];
-  }
-
-  /** The requested model if the plan allows it, otherwise the plan default (handles downgrades too). */
-  resolveModel(state: BillingState, requested?: string | null): string {
-    const allowed = this.allowedModels(state);
-    return requested && allowed.includes(requested) ? requested : allowed[0]!;
-  }
-
   /** AI spend so far in the current period (SAR halalas), from the trigger-maintained meter. */
   async aiSpendHalalas(orgId: string, state: BillingState): Promise<number> {
     const { data } = await this.db
@@ -138,9 +127,9 @@ export class EntitlementService {
 
   /**
    * Gate in front of EVERY AI call: subscription must be active and the annual AI budget not used
-   * up. Returns the model to use (the requested one if the plan allows it, else the plan default).
+   * up. Returns the platform model to use.
    */
-  async aiGate(orgId: string, requestedModel?: string | null): Promise<{ model: string; state: BillingState }> {
+  async aiGate(orgId: string): Promise<{ model: string; state: BillingState }> {
     const state = await this.getBillingState(orgId);
     if (!state.active) throw paymentRequired('subscription_required');
     const budget = state.entitlements.ai_budget_halalas_per_year;
@@ -148,7 +137,7 @@ export class EntitlementService {
       const spent = await this.aiSpendHalalas(orgId, state);
       if (spent >= budget) throw paymentRequired('ai_budget_exhausted', { limit: budget, current: spent });
     }
-    return { model: this.resolveModel(state, requestedModel), state };
+    return { model: this.platformModel, state };
   }
 
   /** Throws 402 if adding `increment` would exceed a countable entitlement. */

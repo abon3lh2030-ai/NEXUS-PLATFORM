@@ -22,8 +22,7 @@
     "test": "npm run build -w @nexus/shared && vitest run",
     "test:rls": "node scripts/test-rls.mjs",
     "test:e2e": "npm run test:e2e -w @nexus/web",
-    "format": "prettier --write .",
-    "demo": "npm run demo -w @nexus/web"
+    "format": "prettier --write ."
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

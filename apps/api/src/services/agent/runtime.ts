@@ -158,7 +158,7 @@ export class AgentRuntime implements DelegationPort {
         current_step: 'Task received',
         priority: p.priority ?? 2,
         provider: this.d.ai.name,
-        model: this.d.ai.isMock ? this.d.ai.defaultModel : this.d.entitlements.resolveModel(p.billing, employee.model),
+        model: this.d.ai.isMock ? this.d.ai.defaultModel : this.d.entitlements.platformModel,
         requested_by_user_id: p.requestedByUserId ?? null,
         requested_by_ai_employee_id: p.requestedByAiEmployeeId ?? null,
       })
@@ -468,8 +468,8 @@ export class AgentRuntime implements DelegationPort {
         const costSarHalalas = Number(fresh?.estimated_cost_usd ?? 0) * this.d.env.USD_TO_SAR_RATE * 100;
         if (costSarHalalas > AI_SAFETY_LIMITS.maxCostHalalasPerSession) throw new AppError(429, 'cost_limit_reached');
 
-        // --- annual AI budget + plan model (re-checked before every model call) ---
-        const gate = await this.d.entitlements.aiGate(s.organization_id, s.model);
+        // --- annual AI budget (re-checked before every model call) + platform model ---
+        const gate = await this.d.entitlements.aiGate(s.organization_id);
         const model = this.d.ai.isMock ? s.model : gate.model;
 
         // --- LLM → structured output (Zod-validated) ---

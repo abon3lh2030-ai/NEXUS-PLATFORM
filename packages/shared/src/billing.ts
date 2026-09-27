@@ -48,8 +48,6 @@ export interface PublicPlan {
   is_popular: boolean;
   is_custom: boolean;
   entitlements: Entitlements;
-  /** AI models this plan may use; the first one is the default. */
-  ai_models: string[];
   sort_order: number;
 }
 

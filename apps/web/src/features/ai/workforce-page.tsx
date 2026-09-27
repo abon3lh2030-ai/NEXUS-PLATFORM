@@ -75,7 +75,6 @@ export function WorkforcePage() {
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {depName(e.department_id) && <Badge>{depName(e.department_id)}</Badge>}
                   <Badge tone="primary">{t(`autonomy.${e.autonomy}`)}</Badge>
-                  <Badge tone="neutral" dir="ltr">{e.model}</Badge>
                 </div>
                 {e.skills.length > 0 && <p className="mt-3 line-clamp-1 text-xs text-muted-foreground">{e.skills.join(' · ')}</p>}
               </Card>
@@ -93,10 +92,9 @@ function HireDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
   const navigate = useNavigate();
   const ar = i18n.language === 'ar';
   const templates = useQuery({ queryKey: ['ai-templates'], queryFn: () => api<Template[]>('/ai/templates'), enabled: open });
-  const models = useQuery({ queryKey: ['ai-models'], queryFn: () => api<{ default: string; models: string[] }>('/ai/models'), enabled: open });
   const deps = useDepartments();
   const [step, setStep] = useState<'pick' | 'form'>('pick');
-  const [form, setForm] = useState({ template_id: null as string | null, name: '', job_title: '', department_id: '', autonomy: 'draft' as string, role_description: '', skills: '', model: '' });
+  const [form, setForm] = useState({ template_id: null as string | null, name: '', job_title: '', department_id: '', autonomy: 'draft' as string, role_description: '', skills: '' });
 
   const pick = (tpl: Template | null) => {
     setForm({
@@ -107,7 +105,6 @@ function HireDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
       autonomy: tpl?.default_autonomy ?? 'draft',
       role_description: tpl ? (ar ? tpl.description_ar : tpl.description_en) : '',
       skills: tpl?.skills.join(', ') ?? '',
-      model: '',
     });
     setStep('form');
   };
@@ -123,7 +120,6 @@ function HireDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
         role_description: form.role_description,
         skills: form.skills.split(',').map((s) => s.trim()).filter(Boolean),
         responsibilities: templates.data?.find((x) => x.id === form.template_id)?.responsibilities ?? [],
-        ...(form.model ? { model: form.model } : {}),
       }),
     { success: t('workforce.hired'), invalidate: [['ai-employees']], onSuccess: (r) => { onOpenChange(false); setStep('pick'); navigate(`/app/workforce/${r.id}`); } },
   );
@@ -176,12 +172,6 @@ function HireDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
               <Field label={t('workforce.autonomy')} hint={t(`autonomyHints.${form.autonomy}`)}>
                 <NativeSelect value={form.autonomy} onChange={(e) => setForm({ ...form, autonomy: e.target.value })}>
                   {AUTONOMY_LEVELS.map((a) => <option key={a} value={a}>{t(`autonomy.${a}`)}</option>)}
-                </NativeSelect>
-              </Field>
-              <Field label={t('ai.model')}>
-                <NativeSelect value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} dir="ltr">
-                  <option value="">{t('workforce.defaultModel', { model: models.data?.default ?? '' })}</option>
-                  {models.data?.models.map((m) => <option key={m} value={m}>{m}</option>)}
                 </NativeSelect>
               </Field>
               <Field label={t('workforce.skills')} hint={t('workforce.skillsHint')}><Input value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} /></Field>

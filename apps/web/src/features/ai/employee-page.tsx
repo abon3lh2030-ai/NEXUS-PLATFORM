@@ -29,7 +29,7 @@ import { LoadingBlock, StatusBadge, useAction, useErrorMessage } from '@/compone
 import { NoAccess } from '@/components/guards';
 import { downloadFile } from '@/features/files/preview';
 import { api, apiDelete, apiPatch, apiPost, apiPut } from '@/lib/api';
-import { durationBetween, formatBytes, formatDateTime, formatNumber, formatRelative, formatUsd } from '@/lib/format';
+import { durationBetween, formatBytes, formatDateTime, formatNumber, formatRelative } from '@/lib/format';
 import { useSession } from '@/providers/session';
 import { SessionControls, SessionTimeline, SessionViewer, useLiveSession } from './session-viewer';
 import { DigitalOffice, EmployeeCalendarTab, EmployeeMeetingsTab, EmployeePresentationsTab, MailTab, VoiceSettings } from '@/features/office/employee-office';
@@ -86,7 +86,6 @@ export function EmployeePage() {
           <p className="text-muted-foreground">{e.job_title}{deps.data?.find((d) => d.id === e.department_id) ? ` · ${deps.data.find((d) => d.id === e.department_id)!.name}` : ''}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <Badge tone="primary">{t(`autonomy.${e.autonomy}`)}</Badge>
-            <Badge dir="ltr">{e.provider} · {e.model}</Badge>
           </div>
         </div>
         {can('ai.assign') && <AssignTaskButton employeeId={e.id} />}
@@ -185,14 +184,13 @@ function TasksTab({ employeeId, onOpenSession }: { employeeId: string; onOpenSes
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
       <table className="w-full text-sm">
-        <thead className="bg-muted/50 text-xs text-muted-foreground"><tr><th className="px-4 py-2 text-start">{t('nav.tasks')}</th><th className="px-4 py-2 text-start">{t('common.status')}</th><th className="hidden px-4 py-2 text-start md:table-cell">{t('ai.duration')}</th><th className="hidden px-4 py-2 text-start md:table-cell">{t('ai.estimatedCost')}</th><th className="hidden px-4 py-2 text-start sm:table-cell">{t('common.date')}</th></tr></thead>
+        <thead className="bg-muted/50 text-xs text-muted-foreground"><tr><th className="px-4 py-2 text-start">{t('nav.tasks')}</th><th className="px-4 py-2 text-start">{t('common.status')}</th><th className="hidden px-4 py-2 text-start md:table-cell">{t('ai.duration')}</th><th className="hidden px-4 py-2 text-start sm:table-cell">{t('common.date')}</th></tr></thead>
         <tbody>
           {data.map((s) => (
             <tr key={s.id} className="cursor-pointer border-t hover:bg-muted/40" onClick={() => onOpenSession(s.id)}>
               <td className="px-4 py-2.5 font-medium">{s.tasks?.title ?? t('ai.workSession')}</td>
               <td className="px-4 py-2.5"><StatusBadge value={s.status} /></td>
               <td className="hidden px-4 py-2.5 text-muted-foreground md:table-cell">{durationBetween(s.started_at, s.completed_at)}</td>
-              <td className="hidden px-4 py-2.5 text-muted-foreground md:table-cell">{formatUsd(Number(s.estimated_cost_usd))}</td>
               <td className="hidden px-4 py-2.5 text-muted-foreground sm:table-cell">{formatRelative(s.created_at)}</td>
             </tr>
           ))}
@@ -234,11 +232,9 @@ function ComputerTab({ employeeId, onOpenSession }: { employeeId: string; onOpen
                   <StatusBadge value={s.status} />
                 </div>
                 {s.current_step && <p className="rounded-lg bg-muted px-3 py-2 text-sm" dir="auto"><span className="text-muted-foreground">{t('ai.currentStep')}:</span> {s.current_step}</p>}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3">
                   <StatCard label={t('ai.started')} value={<span className="text-sm">{formatDateTime(s.started_at)}</span>} />
                   <StatCard label={t('ai.duration')} value={durationBetween(s.started_at, s.completed_at)} />
-                  <StatCard label={t('ai.tokens')} value={formatNumber(Number(s.input_tokens) + Number(s.output_tokens))} />
-                  <StatCard label={t('ai.estimatedCost')} value={formatUsd(Number(s.estimated_cost_usd))} />
                 </div>
                 <SessionControls session={s} />
                 <Button variant="outline" size="sm" className="justify-self-start" onClick={() => onOpenSession(s.id)}>{t('ai.inspectSession')}</Button>
@@ -353,14 +349,12 @@ function PerformanceTab({ employeeId }: { employeeId: string }) {
   if (!data) return <LoadingBlock />;
   const pct = (v: number | null | undefined) => (v === null || v === undefined ? '—' : `${v}%`);
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
       <StatCard label={t('ai.perf.completed')} value={formatNumber(data.tasks_completed)} />
       <StatCard label={t('ai.perf.failed')} value={formatNumber(data.tasks_failed)} />
       <StatCard label={t('ai.perf.successRate')} value={pct(data.success_rate)} />
       <StatCard label={t('ai.perf.avgTime')} value={data.avg_completion_minutes === null ? '—' : t('ai.perf.minutes', { count: data.avg_completion_minutes ?? 0 })} />
       <StatCard label={t('ai.perf.workload')} value={formatNumber(data.current_workload)} />
-      <StatCard label={t('ai.tokens')} value={formatNumber(data.tokens)} />
-      <StatCard label={t('ai.estimatedCost')} value={formatUsd(data.estimated_cost_usd)} />
       <StatCard label={t('ai.perf.approvalRate')} value={pct(data.approval_rate)} hint={t('ai.perf.documents', { count: data.documents_created ?? 0 })} />
     </div>
   );

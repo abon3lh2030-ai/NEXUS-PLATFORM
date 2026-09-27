@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { LoadingBlock, MockBanner, StatusBadge } from '@/components/common';
 import { api } from '@/lib/api';
-import { durationBetween, formatNumber, formatRelative, formatTime, formatUsd } from '@/lib/format';
+import { durationBetween, formatNumber, formatRelative, formatTime } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session';
 import { SessionViewer } from './session-viewer';
@@ -57,12 +57,11 @@ export function OperationsPage() {
         actions={<Badge tone={live ? 'success' : 'neutral'}><Radio /> {live ? t('ops.live') : t('ops.polling')}</Badge>}
       />
       <MockBanner show={data.provider.is_mock} />
-      <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label={t('ops.activeEmployees')} value={formatNumber(busyEmployees.length)} icon={<Cpu />} hint={t('ops.ofTotal', { count: data.employees.length })} />
         <StatCard label={t('ops.running')} value={formatNumber(running.length)} icon={<Activity />} hint={t('ops.queued', { count: data.active_sessions.length - running.length })} />
         <StatCard label={t('ops.waitingApprovals')} value={formatNumber(data.pending_approvals.length)} icon={<AlertTriangle />} />
         <StatCard label={t('ops.completed24h')} value={formatNumber(data.recent_sessions.filter((s) => s.status === 'completed').length)} icon={<CheckCircle2 />} hint={t('ops.failed', { count: data.recent_sessions.filter((s) => s.status === 'failed').length })} />
-        <StatCard label={t('ops.cost24h')} value={formatUsd(data.usage_24h.estimated_cost_usd)} hint={t('ops.tokens', { count: data.usage_24h.tokens })} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
@@ -83,7 +82,6 @@ export function OperationsPage() {
                       </div>
                       <div className="hidden text-end text-xs text-muted-foreground sm:block">
                         <p>{durationBetween(s.started_at ?? s.queued_at)}</p>
-                        <p>{formatUsd(Number(s.estimated_cost_usd))}</p>
                       </div>
                       <StatusBadge value={s.status} />
                     </button>

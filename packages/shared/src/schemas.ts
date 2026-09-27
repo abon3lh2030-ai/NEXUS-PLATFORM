@@ -266,7 +266,6 @@ export const aiEmployeeSchema = z.object({
   instructions: text(10000).optional().default(''),
   autonomy: z.enum(AUTONOMY_LEVELS).optional().default('draft'),
   avatar_seed: text(60).optional(),
-  model: text(80).optional(),
 });
 export type AiEmployeeInput = z.infer<typeof aiEmployeeSchema>;
 

@@ -56,23 +56,25 @@ afterAll(async () => {
   await db?.close();
 });
 
-describe('plan AI budgets and models', () => {
-  it('every self-serve plan has an AI budget below its price, and cheaper plans exclude Opus/Fable', async () => {
-    const r = await db.query<{ code: string; price: number | null; budget: number | null; models: string[] }>(
-      `select code, price_halalas price, (entitlements->>'ai_budget_halalas_per_year')::bigint budget, ai_models models from subscription_plans order by sort_order`,
+describe('plan AI budgets', () => {
+  it('every self-serve plan has an AI budget of at most 40% of its price; enterprise is set per offer', async () => {
+    const r = await db.query<{ code: string; price: number | null; budget: number | null }>(
+      `select code, price_halalas price, (entitlements->>'ai_budget_halalas_per_year')::bigint budget from subscription_plans order by sort_order`,
     );
     const by = Object.fromEntries(r.rows.map((x) => [x.code, x]));
-    expect(by.starter).toMatchObject({ budget: 35000, models: ['claude-sonnet-5', 'claude-haiku-4-5'] });
-    expect(by.pro).toMatchObject({ budget: 75000, models: ['claude-sonnet-5', 'claude-haiku-4-5'] });
+    expect(by.starter).toMatchObject({ budget: 35000 });
+    expect(by.pro).toMatchObject({ budget: 75000 });
     expect(by.business).toMatchObject({ budget: 115000 });
-    expect(by.business!.models[0]).toBe('claude-sonnet-5');
+    expect(by.enterprise!.budget).toBeNull();
     for (const code of ['starter', 'pro', 'business']) {
       const p = by[code]!;
       expect(Number(p.budget)).toBeLessThanOrEqual(Number(p.price) * 0.4);
     }
-    for (const code of ['starter', 'pro']) {
-      expect(by[code]!.models.some((m) => /opus|fable/.test(m))).toBe(false);
-    }
+  });
+
+  it('customers cannot choose a model: plans carry no model list', async () => {
+    const r = await db.query(`select 1 from information_schema.columns where table_name = 'subscription_plans' and column_name = 'ai_models'`);
+    expect(r.rows).toHaveLength(0);
   });
 });
 
@@ -94,10 +96,9 @@ describe('usage meter trigger', () => {
 describe('EntitlementService.aiGate', () => {
   const svc = () => new EntitlementService(pgliteDb(db), 3.75);
 
-  it('allows AI while under budget and forces a plan model', async () => {
-    const gate = await svc().aiGate(ORG, 'claude-opus-5');
-    expect(gate.model).toBe('claude-sonnet-5'); // Opus not allowed on Starter → plan default
-    expect((await svc().aiGate(ORG, 'claude-haiku-4-5')).model).toBe('claude-haiku-4-5');
+  it('allows AI while under budget and always uses the single platform model', async () => {
+    expect((await svc().aiGate(ORG)).model).toBe('claude-sonnet-5');
+    expect((await new EntitlementService(pgliteDb(db), 3.75, 'claude-opus-5').aiGate(ORG)).model).toBe('claude-opus-5');
   });
 
   it('reports spend in halalas', async () => {

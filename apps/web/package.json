@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "preview": "vite preview",
-    "test:e2e": "playwright test",
-    "demo": "VITE_DEMO_MODE=true VITE_SUPABASE_URL=http://127.0.0.1:5173/demo-supabase VITE_SUPABASE_ANON_KEY=demo VITE_API_BASE_URL=http://127.0.0.1:5173/demo-api VITE_PUBLIC_APP_URL=http://127.0.0.1:5173 vite --host 127.0.0.1 --port 5173"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
