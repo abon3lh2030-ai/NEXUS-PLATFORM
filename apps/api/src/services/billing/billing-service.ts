@@ -166,8 +166,9 @@ export class BillingService {
   }
 
   async overview(actor: OrgActor) {
-    const [usage, plans, { data: transactions }] = await Promise.all([
+    const [usage, aiUsage, plans, { data: transactions }] = await Promise.all([
       this.entitlements.getUsage(actor.orgId, actor.billing),
+      this.entitlements.aiUsageSummary(actor.orgId, actor.billing),
       this.entitlements.listPlans(),
       actor.permissions.has('billing.view')
         ? this.db.from('payment_transactions').select('id, plan_code, amount_halalas, currency, status, payment_method, provider_metadata, paid_at, created_at').eq('organization_id', actor.orgId).order('created_at', { ascending: false }).limit(50)
@@ -179,6 +180,7 @@ export class BillingService {
       active: actor.billing.active,
       entitlements: actor.billing.entitlements,
       usage,
+      ai_usage: aiUsage,
       plans: plans.filter((p) => p.is_public),
       transactions: transactions ?? [],
       payments_enabled: Boolean(this.moyasar),

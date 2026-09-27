@@ -1,5 +1,9 @@
 import {
+  aiWeekResetsAt,
+  aiWeekStart,
   isSubscriptionActive,
+  weeklyAiLimit,
+  type AiUsageSummary,
   type EntitlementKey,
   type Entitlements,
   type FeatureKey,
@@ -113,31 +117,54 @@ export class EntitlementService {
     return Math.ceil((microUsd / 1_000_000) * this.usdToSar * 100);
   }
 
-  /** AI spend so far in the current period (SAR halalas), from the trigger-maintained meter. */
-  async aiSpendHalalas(orgId: string, state: BillingState): Promise<number> {
+  private async counterHalalas(orgId: string, metric: string, periodStart: string): Promise<number> {
     const { data } = await this.db
       .from('usage_counters')
       .select('value')
       .eq('organization_id', orgId)
-      .eq('metric', 'ai_cost_micro_usd')
-      .eq('period_start', this.periodStart(state))
+      .eq('metric', metric)
+      .eq('period_start', periodStart)
       .maybeSingle<{ value: number }>();
     return this.microUsdToHalalas(Number(data?.value ?? 0));
   }
 
+  /** AI spend so far in the current subscription period (SAR halalas), from the trigger-maintained meter. */
+  aiSpendHalalas(orgId: string, state: BillingState): Promise<number> {
+    return this.counterHalalas(orgId, 'ai_cost_micro_usd', this.periodStart(state));
+  }
+
+  /** AI spend in the current week (Sunday 00:00 Riyadh). */
+  aiWeekSpendHalalas(orgId: string, now = new Date()): Promise<number> {
+    return this.counterHalalas(orgId, 'ai_cost_micro_usd_week', aiWeekStart(now).toISOString());
+  }
+
   /**
-   * Gate in front of EVERY AI call: subscription must be active and the annual AI budget not used
-   * up. Returns the platform model to use.
+   * Gate in front of EVERY AI call: subscription active, annual AI budget not used up and — when
+   * starting new AI work — this week's share not used up either. A running work session only checks
+   * the annual cap, so a task isn't cut off halfway (overshoot is bounded by the per-session cost cap).
    */
-  async aiGate(orgId: string): Promise<{ model: string; state: BillingState }> {
+  async aiGate(orgId: string, opts: { weekly?: boolean } = {}): Promise<{ model: string; state: BillingState }> {
     const state = await this.getBillingState(orgId);
     if (!state.active) throw paymentRequired('subscription_required');
-    const budget = state.entitlements.ai_budget_halalas_per_year;
-    if (budget !== null && budget !== undefined) {
+    const annual = state.entitlements.ai_budget_halalas_per_year;
+    if (annual !== null && annual !== undefined) {
       const spent = await this.aiSpendHalalas(orgId, state);
-      if (spent >= budget) throw paymentRequired('ai_budget_exhausted', { limit: budget, current: spent });
+      if (spent >= annual) throw paymentRequired('ai_budget_exhausted');
+      const weekly = weeklyAiLimit(annual);
+      if (opts.weekly !== false && weekly !== null && (await this.aiWeekSpendHalalas(orgId)) >= weekly) {
+        throw paymentRequired('ai_weekly_limit_reached', { resets_at: aiWeekResetsAt().toISOString() });
+      }
     }
     return { model: this.platformModel, state };
+  }
+
+  /** Customer-facing AI usage: percentages only, never money. */
+  async aiUsageSummary(orgId: string, state: BillingState): Promise<AiUsageSummary> {
+    const annual = state.entitlements.ai_budget_halalas_per_year;
+    const weekly = weeklyAiLimit(annual);
+    const pct = (used: number, limit: number | null) => (limit === null ? null : limit <= 0 ? 100 : Math.min(100, Math.round((used / limit) * 100)));
+    const [year, week] = await Promise.all([this.aiSpendHalalas(orgId, state), this.aiWeekSpendHalalas(orgId)]);
+    return { week_pct: pct(week, weekly), week_resets_at: aiWeekResetsAt().toISOString(), year_pct: pct(year, annual ?? null) };
   }
 
   /** Throws 402 if adding `increment` would exceed a countable entitlement. */

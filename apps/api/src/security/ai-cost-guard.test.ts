@@ -2,6 +2,7 @@ import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Db } from '../lib/supabase.js';
 import { EntitlementService } from '../services/entitlements.js';
+import { aiWeekStart } from '@nexus/shared';
 import { createMigratedDb } from '../test-utils/pg-harness.js';
 
 /**
@@ -86,6 +87,16 @@ describe('usage meter trigger', () => {
     expect(Number(r.rows[0]!.value)).toBe(1_750_000);
   });
 
+  it('also counts each event in its Riyadh week (SQL week start matches the shared TS helper)', async () => {
+    for (const at of ['2026-09-30T07:00:00Z', '2026-10-03T20:59:00Z', '2026-10-03T21:00:00Z', '2026-12-31T23:30:00Z']) {
+      const r = await db.query<{ w: Date }>(`select public.ai_week_start($1::timestamptz) w`, [at]);
+      expect(new Date(r.rows[0]!.w).toISOString()).toBe(aiWeekStart(new Date(at)).toISOString());
+    }
+    const r = await db.query<{ value: string; period_start: Date }>(`select value, period_start from usage_counters where organization_id = $1 and metric = 'ai_cost_micro_usd_week'`, [ORG]);
+    expect(Number(r.rows[0]!.value)).toBe(1_750_000);
+    expect(new Date(r.rows[0]!.period_start).toISOString()).toBe(aiWeekStart().toISOString());
+  });
+
   it('ignores organizations without a subscription', async () => {
     await addUsage(ORG_NO_SUB, 2);
     const r = await db.query(`select 1 from usage_counters where organization_id = $1`, [ORG_NO_SUB]);
@@ -106,6 +117,16 @@ describe('EntitlementService.aiGate', () => {
     const state = await s.getBillingState(ORG);
     // 1.75 USD × 3.75 = 6.5625 SAR → 657 halalas (rounded up)
     expect(await s.aiSpendHalalas(ORG, state)).toBe(657);
+  });
+
+  it("refuses NEW AI work once this week's share is used up, but lets a running task continue", async () => {
+    // Starter: 35000 / 53 = 660 halalas per week; 657 already used this week.
+    await addUsage(ORG, 0.01);
+    await expect(svc().aiGate(ORG)).rejects.toMatchObject({ statusCode: 402, code: 'ai_weekly_limit_reached' });
+    await expect(svc().aiGate(ORG, { weekly: false })).resolves.toMatchObject({ model: 'claude-sonnet-5' });
+    const usage = await svc().aiUsageSummary(ORG, await svc().getBillingState(ORG));
+    expect(usage.week_pct).toBe(100);
+    expect(usage.year_pct).toBe(2);
   });
 
   it('refuses every AI call with 402 once the annual budget is used up', async () => {

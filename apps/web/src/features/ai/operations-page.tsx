@@ -1,12 +1,13 @@
 import { Avatar, Badge, Button, EmptyState, PageHeader, Section, StatCard } from '@nexus/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Activity, AlertTriangle, CheckCircle2, Cpu, Radio, Wrench } from 'lucide-react';
+import type { AiUsageSummary } from '@nexus/shared';
+import { Activity, AlertTriangle, CheckCircle2, Cpu, Gauge, Radio, Wrench } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { LoadingBlock, MockBanner, StatusBadge } from '@/components/common';
 import { api } from '@/lib/api';
-import { durationBetween, formatNumber, formatRelative, formatTime } from '@/lib/format';
+import { durationBetween, formatDateTime, formatNumber, formatRelative, formatTime } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session';
 import { SessionViewer } from './session-viewer';
@@ -17,7 +18,7 @@ interface Ops {
   recent_sessions: Array<{ id: string; ai_employee_id: string; status: string; current_step: string | null; completed_at: string; error: string | null; tasks: { title: string } | null }>;
   pending_approvals: Array<{ id: string; title: string; risk: string; created_at: string }>;
   tool_activity: Array<{ id: string; session_id: string; ai_employee_id: string; tool: string; status: string; created_at: string }>;
-  usage_24h: { tokens: number; estimated_cost_usd: number; estimated_cost_sar: number };
+  ai_usage: AiUsageSummary;
   provider: { ai: string; is_mock: boolean; computer: string };
 }
 
@@ -57,11 +58,12 @@ export function OperationsPage() {
         actions={<Badge tone={live ? 'success' : 'neutral'}><Radio /> {live ? t('ops.live') : t('ops.polling')}</Badge>}
       />
       <MockBanner show={data.provider.is_mock} />
-      <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label={t('ops.activeEmployees')} value={formatNumber(busyEmployees.length)} icon={<Cpu />} hint={t('ops.ofTotal', { count: data.employees.length })} />
         <StatCard label={t('ops.running')} value={formatNumber(running.length)} icon={<Activity />} hint={t('ops.queued', { count: data.active_sessions.length - running.length })} />
         <StatCard label={t('ops.waitingApprovals')} value={formatNumber(data.pending_approvals.length)} icon={<AlertTriangle />} />
         <StatCard label={t('ops.completed24h')} value={formatNumber(data.recent_sessions.filter((s) => s.status === 'completed').length)} icon={<CheckCircle2 />} hint={t('ops.failed', { count: data.recent_sessions.filter((s) => s.status === 'failed').length })} />
+        <StatCard label={t('billing.aiWeek')} value={data.ai_usage.week_pct === null ? t('pricing.unlimited') : `${data.ai_usage.week_pct}%`} icon={<Gauge />} hint={t('billing.aiWeekResets', { date: formatDateTime(data.ai_usage.week_resets_at) })} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">

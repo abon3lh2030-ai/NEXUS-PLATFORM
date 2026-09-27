@@ -1,5 +1,5 @@
 import { Badge, Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, EmptyState, PageHeader, Progress, Section, Spinner } from '@nexus/ui';
-import type { Entitlements, PublicPlan, UsageSnapshot } from '@nexus/shared';
+import type { AiUsageSummary, Entitlements, PublicPlan, UsageSnapshot } from '@nexus/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, CreditCard, ShieldCheck, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -18,6 +18,7 @@ interface Overview {
   active: boolean;
   entitlements: Entitlements;
   usage: UsageSnapshot;
+  ai_usage: AiUsageSummary;
   plans: PublicPlan[];
   transactions: Array<{ id: string; plan_code: string; amount_halalas: number; status: string; payment_method: string | null; provider_metadata: { masked_number?: string | null; company?: string | null }; paid_at: string | null; created_at: string }>;
   payments_enabled: boolean;
@@ -148,7 +149,8 @@ export function BillingPage() {
               <UsageRow label={t('pricing.projects')} used={data.usage.active_projects} limit={e.active_projects} />
               <UsageRow label={t('pricing.storage')} used={data.usage.storage_bytes} limit={e.storage_bytes} bytes />
               <UsageRow label={t('billing.computerMinutes')} used={data.usage.computer_minutes_per_year} limit={e.computer_minutes_per_year} />
-              <div className="sm:col-span-2"><UsageRow label={t('billing.aiBudget')} used={e.ai_budget_halalas_per_year ? Math.min(100, Math.round((data.usage.ai_budget_halalas_per_year / e.ai_budget_halalas_per_year) * 100)) : 0} limit={e.ai_budget_halalas_per_year === null ? null : 100} percent hint={t('billing.aiBudgetHint')} /></div>
+              <UsageRow label={t('billing.aiWeek')} used={data.ai_usage.week_pct ?? 0} limit={data.ai_usage.week_pct === null ? null : 100} percent hint={t('billing.aiWeekHint', { date: formatDateTime(data.ai_usage.week_resets_at) })} />
+              <UsageRow label={t('billing.aiBudget')} used={data.ai_usage.year_pct ?? 0} limit={data.ai_usage.year_pct === null ? null : 100} percent hint={t('billing.aiBudgetHint')} />
             </div>
           ) : <p className="text-sm text-muted-foreground">{t('billing.usageAfterSubscribe')}</p>}
         </Section>

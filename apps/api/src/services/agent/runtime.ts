@@ -468,8 +468,8 @@ export class AgentRuntime implements DelegationPort {
         const costSarHalalas = Number(fresh?.estimated_cost_usd ?? 0) * this.d.env.USD_TO_SAR_RATE * 100;
         if (costSarHalalas > AI_SAFETY_LIMITS.maxCostHalalasPerSession) throw new AppError(429, 'cost_limit_reached');
 
-        // --- annual AI budget (re-checked before every model call) + platform model ---
-        const gate = await this.d.entitlements.aiGate(s.organization_id);
+        // --- annual AI budget (re-checked before every step; the weekly share is checked when work starts) ---
+        const gate = await this.d.entitlements.aiGate(s.organization_id, { weekly: false });
         const model = this.d.ai.isMock ? s.model : gate.model;
 
         // --- LLM → structured output (Zod-validated) ---

@@ -77,3 +77,37 @@ export function isSubscriptionActive(sub: { status: string; ends_at: string | nu
   if (!sub || sub.status !== 'active' || !sub.ends_at) return false;
   return new Date(sub.ends_at).getTime() > now.getTime();
 }
+
+/* ------------------------------ AI weekly usage ------------------------------ */
+
+/** Saudi Arabia is UTC+3 all year (no DST). */
+const RIYADH_OFFSET_MS = 3 * 3_600_000;
+
+/**
+ * The annual AI allowance is spread over 53 weekly windows so a customer can't use it all up in the first
+ * weeks. 53 (not 52) means the weekly limits alone can never exhaust the annual one.
+ */
+export const AI_WEEKS_PER_YEAR = 53;
+
+/** Start of the current AI usage week: Sunday 00:00 Riyadh time. Must match `meter_ai_usage_event()` in SQL. */
+export function aiWeekStart(now: Date = new Date()): Date {
+  const local = new Date(now.getTime() + RIYADH_OFFSET_MS);
+  const startLocal = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() - local.getUTCDay());
+  return new Date(startLocal - RIYADH_OFFSET_MS);
+}
+
+export function aiWeekResetsAt(now: Date = new Date()): Date {
+  return new Date(aiWeekStart(now).getTime() + 7 * 86_400_000);
+}
+
+/** `null` = unlimited. */
+export function weeklyAiLimit(annualLimit: number | null | undefined): number | null {
+  return annualLimit === null || annualLimit === undefined ? null : Math.floor(annualLimit / AI_WEEKS_PER_YEAR);
+}
+
+/** What customers see: percentages only, never money. */
+export interface AiUsageSummary {
+  week_pct: number | null;
+  week_resets_at: string;
+  year_pct: number | null;
+}

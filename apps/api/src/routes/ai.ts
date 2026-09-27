@@ -221,26 +221,24 @@ export async function aiRoutes(app: FastifyInstance, s: Services) {
   app.get('/ai/operations', view, async (req) => {
     const a = actorOf(req);
     const since = new Date(Date.now() - 24 * 3600_000).toISOString();
-    const [employees, active, recent, approvals, usage] = await Promise.all([
+    const [employees, active, recent, approvals, aiUsage] = await Promise.all([
       s.db.from('ai_employees').select('id, name, job_title, status, avatar_seed, department_id').eq('organization_id', a.orgId).is('deleted_at', null),
-      s.db.from('ai_work_sessions').select('id, ai_employee_id, task_id, status, current_step, started_at, queued_at, input_tokens, output_tokens, estimated_cost_usd, tasks(title)').eq('organization_id', a.orgId).in('status', ['queued', 'preparing', 'running', 'paused', 'waiting_approval']).order('queued_at'),
+      s.db.from('ai_work_sessions').select('id, ai_employee_id, task_id, status, current_step, started_at, queued_at, tasks(title)').eq('organization_id', a.orgId).in('status', ['queued', 'preparing', 'running', 'paused', 'waiting_approval']).order('queued_at'),
       s.db.from('ai_work_sessions').select('id, ai_employee_id, status, current_step, completed_at, error, tasks(title)').eq('organization_id', a.orgId).in('status', ['completed', 'failed', 'cancelled']).gte('completed_at', since).order('completed_at', { ascending: false }).limit(50),
       s.db.from('approvals').select('id, title, risk, created_at, session_id, requested_by_ai_employee_id').eq('organization_id', a.orgId).eq('status', 'pending').order('created_at').limit(50),
-      s.db.from('ai_usage_events').select('input_tokens, output_tokens, estimated_cost_usd').eq('organization_id', a.orgId).gte('created_at', since),
+      s.entitlements.aiUsageSummary(a.orgId, a.billing),
     ]);
     const activeIds = ((active.data ?? []) as Array<{ id: string }>).map((r) => r.id);
     const { data: toolActivity } = activeIds.length
       ? await s.db.from('ai_tool_executions').select('id, session_id, ai_employee_id, tool, status, created_at').in('session_id', activeIds).order('created_at', { ascending: false }).limit(50)
       : { data: [] };
-    const u = (usage.data ?? []) as Array<{ input_tokens: number; output_tokens: number; estimated_cost_usd: number }>;
-    const costUsd = u.reduce((x, r) => x + Number(r.estimated_cost_usd), 0);
     return {
       employees: employees.data ?? [],
       active_sessions: active.data ?? [],
       recent_sessions: recent.data ?? [],
       pending_approvals: approvals.data ?? [],
       tool_activity: toolActivity ?? [],
-      usage_24h: { tokens: u.reduce((x, r) => x + r.input_tokens + r.output_tokens, 0), estimated_cost_usd: Math.round(costUsd * 100) / 100, estimated_cost_sar: Math.round(costUsd * s.env.USD_TO_SAR_RATE * 100) / 100 },
+      ai_usage: aiUsage,
       provider: { ai: s.ai.name, is_mock: s.ai.isMock, computer: s.computer.name, capabilities: s.computer.capabilities },
     };
   });
