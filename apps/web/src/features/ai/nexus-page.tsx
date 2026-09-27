@@ -29,7 +29,9 @@ export function NexusPage() {
   const conversation = useQuery({ queryKey: ['nexus-conversation', conversationId], queryFn: () => api<{ messages: Msg[] }>(`/nexus/conversations/${conversationId}`), enabled: Boolean(conversationId) });
   const messages = conversation.data?.messages ?? [];
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages.length, pending]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length, pending]);
 
   const send = async (text: string) => {
     if (!text.trim() || pending) return;
