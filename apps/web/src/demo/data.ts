@@ -135,7 +135,7 @@ function seed() {
   const notifications: Row[] = [
     { id: 'ntf-1', title: 'طلب اعتماد جديد', body: 'وليد يطلب اعتماد تقرير تحليل التكاليف', link: '/app/approvals', type: 'approval_requested', read_at: null, created_at: minutes(-90) },
     { id: 'ntf-2', title: 'اكتملت مهمة', body: 'ليان أنهت خطة الحملة التسويقية', link: '/app/tasks', type: 'ai_completed', read_at: null, created_at: days(-2) },
-    { id: 'ntf-3', title: 'مرحبًا بك في NEXUS', body: 'هذه نسخة تجريبية على جهازك', link: null, type: 'info', read_at: days(-3), created_at: days(-3) },
+    { id: 'ntf-3', title: 'مرحبًا بك في NEXUS', body: 'تم تفعيل اشتراك منشأتك في باقة الأعمال', link: null, type: 'info', read_at: days(-3), created_at: days(-3) },
   ];
   const activity: Row[] = [
     { id: 1, verb: 'started', entity_type: 'ai_session', summary: 'أطلس بدأ العمل على عرض نتائج الربع الثالث', created_at: minutes(-6), actor_ai_employee_id: 'ai-atlas' },

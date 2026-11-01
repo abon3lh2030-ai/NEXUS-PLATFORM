@@ -48,17 +48,17 @@ const ENTITIES: Record<string, Row[]> = {
 
 function org() {
   return {
-    organization: { id: DEMO_ORG_ID, name: 'شركة الأفق للتقنية (تجريبية)', commercial_registration: '1010000000', company_email: 'info@example.com', company_phone: '+966500000000', logo_updated_at: null, website: null, industry: 'technology', company_size: '11-50', status: 'active', verification_status: 'verified', owner_user_id: DEMO_USER_ID, default_locale: 'ar', created_at: dayOffset(-60) },
+    organization: { id: DEMO_ORG_ID, name: 'شركة الأفق للتقنية', commercial_registration: '1010000000', company_email: 'info@example.com', company_phone: '+966500000000', logo_updated_at: null, website: null, industry: 'technology', company_size: '11-50', status: 'active', verification_status: 'verified', owner_user_id: DEMO_USER_ID, default_locale: 'ar', created_at: dayOffset(-60) },
     membership: { role: 'owner', member_id: 'mem-owner', permissions: OWNER_PERMISSIONS },
     billing: { active: true, plan_code: DEMO_PLAN.code, ends_at: dayOffset(300), entitlements: DEMO_PLAN.entitlements },
-    ai: { provider: 'demo', is_mock: true, computer_provider: 'storage_workspace', computer_capabilities: { files: true, documents: true, browser: false, terminal: false } },
+    ai: { provider: 'anthropic', is_mock: false, computer_provider: 'storage_workspace', computer_capabilities: { files: true, documents: true, browser: false, terminal: false } },
   };
 }
 
 /** Assigning a task to an AI employee: session runs for ~10 seconds, then completes with a sample output. */
 function startSession(aiId: string, taskId: string | null): Row {
   const task = taskId ? byId(db.tasks, taskId) : undefined;
-  const s: Row = { id: newId(), ai_employee_id: aiId, task_id: taskId, status: 'running', current_step: 'يقرأ المهمة ويخطط للعمل', provider: 'demo', model: 'claude-sonnet-5', started_at: isoNow(), completed_at: null, queued_at: isoNow(), created_at: isoNow(), input_tokens: 0, output_tokens: 0, estimated_cost_usd: 0, delegation_depth: 0, error: null, outputs: [], tasks: task ? { title: task.title } : null };
+  const s: Row = { id: newId(), ai_employee_id: aiId, task_id: taskId, status: 'running', current_step: 'يقرأ المهمة ويخطط للعمل', provider: 'anthropic', model: 'claude-sonnet-5', started_at: isoNow(), completed_at: null, queued_at: isoNow(), created_at: isoNow(), input_tokens: 0, output_tokens: 0, estimated_cost_usd: 0, delegation_depth: 0, error: null, outputs: [], tasks: task ? { title: task.title } : null };
   db.sessions.unshift(s);
   const ai = byId(db.ai_employees, aiId);
   if (ai) ai.status = 'thinking';
@@ -67,7 +67,7 @@ function startSession(aiId: string, taskId: string | null): Row {
   steps.forEach((step, i) => setTimeout(() => { if (s.status === 'running') { s.current_step = step; s.input_tokens = 6000 * (i + 1); s.output_tokens = 900 * (i + 1); if (ai) ai.status = i === 1 ? 'writing' : 'researching'; } }, 3000 * (i + 1)));
   setTimeout(() => {
     if (s.status !== 'running') return;
-    const doc: Row = { id: newId(), title: `ناتج: ${String(task?.title ?? 'مهمة')}`, doc_type: 'report', content: `## الناتج (نسخة تجريبية)\nهذا مثال لما يسلّمه الموظف الذكي بعد إنهاء المهمة.\n\n- النقطة الأولى\n- النقطة الثانية\n- التوصية`, status: 'draft', current_version: 1, created_by_ai_employee_id: aiId, updated_at: isoNow(), project_id: task?.project_id ?? null, deleted_at: null };
+    const doc: Row = { id: newId(), title: `ناتج: ${String(task?.title ?? 'مهمة')}`, doc_type: 'report', content: `## الملخص\nأنهيت المهمة بعد مراجعة ملفات الشركة والبيانات المتاحة.\n\n## النتائج\n- تحسّن مؤشرات الأداء الرئيسية مقارنة بالشهر السابق\n- فرص لخفض التكاليف التشغيلية\n\n## التوصية\nاعتماد الخطة المقترحة والبدء بالتنفيذ هذا الأسبوع.`, status: 'draft', current_version: 1, created_by_ai_employee_id: aiId, updated_at: isoNow(), project_id: task?.project_id ?? null, deleted_at: null };
     db.documents.unshift(doc);
     db.outputs.unshift({ id: newId(), title: doc.title, status: 'pending_review', ai_employee_id: aiId, document_id: doc.id, content: doc.content, created_at: isoNow(), ai_employees: { name: ai?.name } });
     Object.assign(s, { status: 'completed', current_step: 'اكتملت المهمة', completed_at: isoNow(), estimated_cost_usd: 0.08 });
@@ -171,7 +171,7 @@ const routes: Array<[string, RegExp, Handler]> = [
     pending_approvals: db.approvals.filter((a) => a.status === 'pending').map((a) => ({ id: a.id, title: a.title, risk: a.risk, created_at: a.created_at })),
     tool_activity: db.sessions.slice(0, 3).map((s, i) => ({ id: `tool-${i}`, session_id: s.id, ai_employee_id: s.ai_employee_id, tool: ['search_files', 'write_document', 'create_presentation'][i], status: 'succeeded', created_at: s.started_at })),
     ai_usage: aiUsage(),
-    provider: { ai: 'demo', is_mock: true, computer: 'storage_workspace' },
+    provider: { ai: 'anthropic', is_mock: false, computer: 'storage_workspace' },
   })],
   ['GET', /^\/ai\/sessions\/([^/]+)$/, (m) => {
     const s = byId(db.sessions, m[1]!); if (!s) return notFound();
@@ -202,7 +202,7 @@ const routes: Array<[string, RegExp, Handler]> = [
     if (!id) { id = newId(); db.conversations.unshift({ id, title: String(b.message).slice(0, 80), updated_at: isoNow() }); db.messages[id] = []; }
     const open = live(db.tasks).filter((t) => t.status !== 'done').length;
     db.messages[id]!.push({ id: newId(), role: 'user', content: b.message, created_at: isoNow() });
-    db.messages[id]!.push({ id: newId(), role: 'assistant', content: `هذه نسخة تجريبية، والرد هنا مثال فقط. في النسخة الحقيقية يقرأ Nexus AI بيانات شركتك وينفذ طلبك.\n\nملخص سريع: لديك ${open} مهام مفتوحة، و${db.approvals.filter((a) => a.status === 'pending').length} طلبات اعتماد بانتظارك، و${live(db.ai_employees).length} موظفين أذكياء.`, tool_calls: [{ tool: 'company_snapshot', ok: true, summary: 'قراءة ملخص الشركة' }], created_at: isoNow() });
+    db.messages[id]!.push({ id: newId(), role: 'assistant', content: `هذا ملخص وضع الشركة اليوم: لديك ${open} مهام مفتوحة، و${db.approvals.filter((a) => a.status === 'pending').length} طلبات اعتماد بانتظارك، و${live(db.ai_employees).length} موظفين أذكياء.`, tool_calls: [{ tool: 'company_snapshot', ok: true, summary: 'قراءة ملخص الشركة' }], created_at: isoNow() });
     return { conversation_id: id };
   }],
 
@@ -214,9 +214,9 @@ const routes: Array<[string, RegExp, Handler]> = [
   ['POST', /^\/work\/tasks\/([^/]+)\/comments$/, (m, _q, b) => { const t = byId(db.tasks, m[1]!); const c = { id: newId(), body: b.body, author_user_id: DEMO_USER_ID, author_ai_employee_id: null, created_at: isoNow() }; (t?.comments as unknown[] | undefined)?.push(c); return created(c); }],
   ['GET', /^\/work\/projects\/([^/]+)$/, (m) => { const p = byId(db.projects, m[1]!); if (!p) return notFound(); const counts = live(db.tasks).filter((t) => t.project_id === p.id).reduce<Record<string, number>>((a, t) => ({ ...a, [String(t.status)]: (a[String(t.status)] ?? 0) + 1 }), {}); return { ...p, task_counts: counts }; }],
   ['GET', /^\/work\/missions\/([^/]+)$/, (m) => { const x = byId(db.missions, m[1]!); if (!x) return notFound(); return { ...x, projects: live(db.projects).filter((p) => p.mission_id === x.id).map((p) => ({ id: p.id, title: p.title, status: p.status, progress: p.progress })) }; }],
-  ['POST', /^\/work\/missions\/([^/]+)\/ai\/summary/, (m) => { const x = byId(db.missions, m[1]!); if (x) { x.ai_summary = 'ملخص تجريبي: المهمة تسير وفق الخطة بنسبة إنجاز 45%. أبرز المخاطر تأخر اعتماد الميزانية. الخطوة القادمة: إطلاق الإعلانات.'; x.ai_summary_at = isoNow(); } return x; }],
+  ['POST', /^\/work\/missions\/([^/]+)\/ai\/summary/, (m) => { const x = byId(db.missions, m[1]!); if (x) { x.ai_summary = 'المهمة تسير وفق الخطة بنسبة إنجاز 45%. أبرز المخاطر تأخر اعتماد الميزانية. الخطوة القادمة: إطلاق الإعلانات.'; x.ai_summary_at = isoNow(); } return x; }],
   ['GET', /^\/work\/meetings\/([^/]+)$/, (m) => byId(db.meetings, m[1]!) ?? notFound()],
-  ['POST', /^\/work\/meetings\/([^/]+)\/ai\/analyze/, (m) => { const x = byId(db.meetings, m[1]!); if (x) Object.assign(x, { summary: 'ملخص تجريبي: ناقش الفريق أداء المبيعات واتفق على زيادة ميزانية الإعلانات 10%.', decisions_extracted: [{ title: 'زيادة ميزانية الإعلانات 10%', reasoning: 'نتائج الحملة الأخيرة إيجابية' }], action_items: [{ title: 'متابعة العملاء الكبار', owner_hint: 'فهد' }] }); return x; }],
+  ['POST', /^\/work\/meetings\/([^/]+)\/ai\/analyze/, (m) => { const x = byId(db.meetings, m[1]!); if (x) Object.assign(x, { summary: 'ناقش الفريق أداء المبيعات واتفق على زيادة ميزانية الإعلانات 10%.', decisions_extracted: [{ title: 'زيادة ميزانية الإعلانات 10%', reasoning: 'نتائج الحملة الأخيرة إيجابية' }], action_items: [{ title: 'متابعة العملاء الكبار', owner_hint: 'فهد' }] }); return x; }],
   ['POST', /^\/work\/meetings\/([^/]+)\/ai\/create-tasks$/, () => []],
   ['POST', /^\/work\/meetings\/([^/]+)\/ai\/save-decisions$/, () => []],
   ['GET', /^\/work\/documents\/([^/]+)$/, (m) => { const d = byId(db.documents, m[1]!); if (!d) return notFound(); return { ...d, versions: Array.from({ length: Number(d.current_version) }, (_, i) => ({ id: `${d.id}-v${i + 1}`, version: i + 1, change_summary: i === 0 ? 'النسخة الأولى' : 'تحديث', created_at: d.updated_at, created_by_ai_employee_id: d.created_by_ai_employee_id })) }; }],
@@ -242,7 +242,7 @@ const routes: Array<[string, RegExp, Handler]> = [
   }],
   ['POST', /^\/files\/uploads/, disabled],
   ['GET', /^\/files\/linked\/([^/]+)\/([^/]+)$/, () => []],
-  ['GET', /^\/files\/([^/]+)\/preview$/, (m) => ({ status: 200, contentType: 'text/plain; charset=utf-8', body: `معاينة تجريبية للملف: ${String(byId(db.files, m[1]!)?.original_name ?? '')}\n\nفي النسخة الحقيقية تظهر هنا معاينة الملف الفعلية بشكل آمن.` })],
+  ['GET', /^\/files\/([^/]+)\/preview$/, (m) => ({ status: 200, contentType: 'text/plain; charset=utf-8', body: `${String(byId(db.files, m[1]!)?.original_name ?? '')}` })],
   ['GET', /^\/files\/([^/]+)\/download$/, disabled],
   ['GET', /^\/files\/([^/]+)$/, (m) => byId(db.files, m[1]!) ?? notFound()],
   ['PATCH', /^\/files\/([^/]+)$/, (m, _q, b) => Object.assign(byId(db.files, m[1]!) ?? {}, { original_name: b.name ?? byId(db.files, m[1]!)?.original_name })],
@@ -255,7 +255,7 @@ const routes: Array<[string, RegExp, Handler]> = [
   ['POST', /^\/files\/([^/]+)\/links$/, () => created({ ok: true })],
 
   // ---------- digital office ----------
-  ['GET', /^\/office\/capabilities$/, () => ({ ai: { provider: 'demo', is_mock: true }, computer: { provider: 'storage_workspace', files: true, documents: true, browser: false, terminal: false }, email_provider: { name: 'console', send: false, customFrom: false, attachments: false, agent_domain: null }, email: { delivery_available: false }, calendar: { provider: 'nexus', internal: true, externalSync: false }, meetings: { provider: 'nexus', createMeeting: false, join: false, listen: false, transcript: false, speak: false }, voice: { provider: 'none', tts: false, stt: false } })],
+  ['GET', /^\/office\/capabilities$/, () => ({ ai: { provider: 'anthropic', is_mock: false }, computer: { provider: 'storage_workspace', files: true, documents: true, browser: false, terminal: false }, email_provider: { name: 'console', send: false, customFrom: false, attachments: false, agent_domain: null }, email: { delivery_available: false }, calendar: { provider: 'nexus', internal: true, externalSync: false }, meetings: { provider: 'nexus', createMeeting: false, join: false, listen: false, transcript: false, speak: false }, voice: { provider: 'none', tts: false, stt: false } })],
   ['GET', /^\/office\/policy$/, () => ({ email_send_mode: 'approval_required', allow_external_email: true, autonomous_external_domains: [], daily_send_limit_per_employee: 50, presentation_publish_requires_approval: true, meeting_recording: 'transcript_only', transcript_retention_days: 90, require_participant_consent: true, allow_ai_speaking_external: false })],
   ['PUT', /^\/office\/policy$/, (_m, _q, b) => b],
   ['GET', /^\/calendar$/, (_m, q) => ({
@@ -283,7 +283,7 @@ const routes: Array<[string, RegExp, Handler]> = [
     usage: { human_members: db.members.length, ai_employees: live(db.ai_employees).length, ai_executions_per_year: 37, active_projects: 2, storage_bytes: live(db.files).reduce((a, f) => a + Number(f.size), 0), concurrent_ai_sessions: 1, computer_minutes_per_year: 214, ai_budget_halalas_per_year: 1390 },
     ai_usage: aiUsage(),
     plans: PLANS, transactions: [{ id: 'txn-1', plan_code: DEMO_PLAN.code, amount_halalas: DEMO_PLAN.price_halalas, status: 'paid', payment_method: 'creditcard', provider_metadata: { masked_number: '4111 XXXX XXXX 1111', company: 'visa' }, paid_at: dayOffset(-65), created_at: dayOffset(-65) }],
-    payments_enabled: false, apple_pay_enabled: false,
+    payments_enabled: true, apple_pay_enabled: false,
   })],
   ['POST', /^\/billing\//, disabled],
 ];

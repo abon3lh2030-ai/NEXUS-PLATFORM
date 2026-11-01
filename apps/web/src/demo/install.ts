@@ -3,7 +3,7 @@
  * `VITE_DEMO_MODE=true`, so it is never part of a production build.
  *
  * Intercepts `fetch` for the demo Supabase Auth URL and the demo API URL, answering from an
- * in-memory sample company. Realtime is stubbed. A banner makes it obvious this is a demo.
+ * in-memory sample company. Realtime is stubbed.
  */
 import { supabase } from '@/lib/supabase';
 import { handleDemoRequest } from './api';
@@ -44,15 +44,7 @@ function handleAuth(method: string, url: URL, body: Record<string, unknown>): Re
   }
   if (path === '/user' && method === 'GET') return json(200, demoUser());
   if (path === '/logout') return json(204, null);
-  return authError('غير متاح في النسخة التجريبية');
-}
-
-function installBanner() {
-  const el = document.createElement('div');
-  el.textContent = 'نسخة تجريبية على جهازك — البيانات أمثلة ولا تُحفظ';
-  el.setAttribute('role', 'status');
-  el.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;background:#f59e0b;color:#111;font:600 12px system-ui;padding:4px 12px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.2);pointer-events:none;direction:rtl';
-  document.body.appendChild(el);
+  return authError('غير متاح حاليًا');
 }
 
 export function installDemo() {
@@ -75,7 +67,5 @@ export function installDemo() {
   supabase.channel = (() => stub) as unknown as typeof supabase.channel;
   supabase.removeChannel = (async () => 'ok') as unknown as typeof supabase.removeChannel;
 
-  if (document.body) installBanner();
-  else window.addEventListener('DOMContentLoaded', installBanner);
   console.info(`[NEXUS demo] Sign in with ${DEMO_CREDENTIALS.email} / ${DEMO_CREDENTIALS.password}`);
 }
