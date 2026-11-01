@@ -35,7 +35,7 @@ export const en: typeof ar = {
     execute_internal: 'Executes internal actions; sensitive ones need approval.',
     autonomous: 'Works autonomously within its permissions; terminal commands always need approval.',
   },
-  plans: { starter: 'Starter', pro: 'Pro', business: 'Business', enterprise: 'Enterprise' },
+  plans: { launch: 'Launch', starter: 'Starter', pro: 'Pro', business: 'Business', enterprise: 'Enterprise' },
   features: {
     basic_memory: 'Basic memory', full_memory: 'Full memory', knowledge: 'Knowledge center', decisions: 'Decisions', meetings: 'Meetings', approvals: 'Approvals',
     advanced_approvals: 'Advanced approvals', agent_orchestration: 'Agent orchestration', advanced_orchestration: 'Advanced orchestration', basic_analytics: 'Basic analytics',

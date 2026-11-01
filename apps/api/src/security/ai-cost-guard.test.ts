@@ -48,7 +48,7 @@ beforeAll(async () => {
   await db.query(`insert into organizations (id, name, commercial_registration, owner_user_id) values ($1, 'A', '1010000001', $3), ($2, 'B', '1010000002', $3)`, [ORG, ORG_NO_SUB, OWNER]);
   await db.query(
     `insert into subscriptions (organization_id, plan_code, status, started_at, current_period_start, ends_at)
-     values ($1, 'starter', 'active', now() - interval '10 days', now() - interval '10 days', now() + interval '355 days')`,
+     values ($1, 'launch', 'active', now() - interval '10 days', now() - interval '10 days', now() + interval '355 days')`,
     [ORG],
   );
 }, 120_000);
@@ -63,11 +63,12 @@ describe('plan AI budgets', () => {
       `select code, price_halalas price, (entitlements->>'ai_budget_halalas_per_year')::bigint budget from subscription_plans order by sort_order`,
     );
     const by = Object.fromEntries(r.rows.map((x) => [x.code, x]));
-    expect(by.starter).toMatchObject({ budget: 35000 });
-    expect(by.pro).toMatchObject({ budget: 75000 });
-    expect(by.business).toMatchObject({ budget: 115000 });
+    expect(by.launch).toMatchObject({ budget: 35000 });
+    expect(by.starter).toMatchObject({ budget: 100000 });
+    expect(by.pro).toMatchObject({ budget: 200000 });
+    expect(by.business).toMatchObject({ budget: 400000 });
     expect(by.enterprise!.budget).toBeNull();
-    for (const code of ['starter', 'pro', 'business']) {
+    for (const code of ['launch', 'starter', 'pro', 'business']) {
       const p = by[code]!;
       expect(Number(p.budget)).toBeLessThanOrEqual(Number(p.price) * 0.4);
     }
@@ -120,7 +121,7 @@ describe('EntitlementService.aiGate', () => {
   });
 
   it("refuses NEW AI work once this week's share is used up, but lets a running task continue", async () => {
-    // Starter: 35000 / 53 = 660 halalas per week; 657 already used this week.
+    // Launch: 35000 / 53 = 660 halalas per week; 657 already used this week.
     await addUsage(ORG, 0.01);
     await expect(svc().aiGate(ORG)).rejects.toMatchObject({ statusCode: 402, code: 'ai_weekly_limit_reached' });
     await expect(svc().aiGate(ORG, { weekly: false })).resolves.toMatchObject({ model: 'claude-sonnet-5' });
@@ -130,7 +131,7 @@ describe('EntitlementService.aiGate', () => {
   });
 
   it('refuses every AI call with 402 once the annual budget is used up', async () => {
-    // Starter budget 350 SAR ≈ 93.34 USD
+    // Launch budget 350 SAR ≈ 93.34 USD
     await addUsage(ORG, 92);
     await expect(svc().aiGate(ORG)).rejects.toMatchObject({ statusCode: 402, code: 'ai_budget_exhausted' });
   });

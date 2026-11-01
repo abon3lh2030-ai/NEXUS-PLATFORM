@@ -67,7 +67,7 @@ export class BillingService {
     };
   }
 
-  async createPlanCheckout(actor: OrgActor, planCode: 'starter' | 'pro' | 'business'): Promise<CheckoutSession> {
+  async createPlanCheckout(actor: OrgActor, planCode: 'launch' | 'starter' | 'pro' | 'business'): Promise<CheckoutSession> {
     this.requireMoyasar();
     if (!actor.permissions.has('billing.manage')) throw forbidden('billing_owner_only');
     if (actor.orgStatus !== 'active') throw conflict('organization_not_active');

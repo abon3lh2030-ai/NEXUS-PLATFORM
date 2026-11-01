@@ -113,7 +113,7 @@ export function AiWorkforcePublicPage() {
 export function PlanCards({ plans, onSelect, currentPlan, busyPlan, actionLabel }: { plans: PublicPlan[]; onSelect?: (code: string) => void; currentPlan?: string | null; busyPlan?: string | null; actionLabel?: string }) {
   const { t } = useTranslation();
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
       {plans.map((p) => {
         const e = p.entitlements;
         const limit = (v: number | null) => (v === null ? t('pricing.unlimited') : formatNumber(v));

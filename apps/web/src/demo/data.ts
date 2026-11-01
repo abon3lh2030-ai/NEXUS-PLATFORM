@@ -20,23 +20,27 @@ export const newId = () => `d${(++seq).toString(16).padStart(7, '0')}-0000-4000-
 
 export const PLANS: PublicPlan[] = [
   {
-    code: 'starter', name_ar: 'المبتدئة', name_en: 'Starter', price_halalas: 99900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 1,
-    entitlements: { human_members: 3, ai_employees: 5, ai_executions_per_year: 600, active_projects: 10, storage_bytes: 53687091200, max_file_size_bytes: 262144000, concurrent_ai_sessions: 3, computer_minutes_per_year: 6000, ai_budget_halalas_per_year: 35000, features: ['basic_memory', 'basic_analytics'] },
+    code: 'launch', name_ar: 'الانطلاقة', name_en: 'Launch', price_halalas: 99900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 0,
+    entitlements: { human_members: 2, ai_employees: 2, ai_executions_per_year: 200, active_projects: 3, storage_bytes: 10737418240, max_file_size_bytes: 104857600, concurrent_ai_sessions: 1, computer_minutes_per_year: 1500, ai_budget_halalas_per_year: 35000, features: ['basic_memory', 'basic_analytics'] },
   },
   {
-    code: 'pro', name_ar: 'الاحترافية', name_en: 'Pro', price_halalas: 199900, currency: 'SAR', billing_interval: 'yearly', is_popular: true, is_custom: false, sort_order: 2,
-    entitlements: { human_members: 10, ai_employees: 15, ai_executions_per_year: 2500, active_projects: null, storage_bytes: 214748364800, max_file_size_bytes: 524288000, concurrent_ai_sessions: 8, computer_minutes_per_year: 24000, ai_budget_halalas_per_year: 75000, features: ['basic_memory', 'full_memory', 'knowledge', 'decisions', 'meetings', 'approvals', 'agent_orchestration', 'basic_analytics', 'advanced_analytics'] },
+    code: 'starter', name_ar: 'المبتدئة', name_en: 'Starter', price_halalas: 299900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 1,
+    entitlements: { human_members: 3, ai_employees: 5, ai_executions_per_year: 600, active_projects: 10, storage_bytes: 53687091200, max_file_size_bytes: 262144000, concurrent_ai_sessions: 3, computer_minutes_per_year: 6000, ai_budget_halalas_per_year: 100000, features: ['basic_memory', 'full_memory', 'knowledge', 'decisions', 'approvals', 'basic_analytics'] },
   },
   {
-    code: 'business', name_ar: 'الأعمال', name_en: 'Business', price_halalas: 299900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 3,
-    entitlements: { human_members: 30, ai_employees: 40, ai_executions_per_year: 8000, active_projects: null, storage_bytes: 1099511627776, max_file_size_bytes: 1073741824, concurrent_ai_sessions: 20, computer_minutes_per_year: 100000, ai_budget_halalas_per_year: 115000, features: ['basic_memory', 'full_memory', 'knowledge', 'decisions', 'meetings', 'approvals', 'advanced_approvals', 'agent_orchestration', 'advanced_orchestration', 'basic_analytics', 'advanced_analytics', 'advanced_permissions', 'audit_logs', 'priority_support', 'archive_uploads'] },
+    code: 'pro', name_ar: 'الاحترافية', name_en: 'Pro', price_halalas: 599900, currency: 'SAR', billing_interval: 'yearly', is_popular: true, is_custom: false, sort_order: 2,
+    entitlements: { human_members: 10, ai_employees: 15, ai_executions_per_year: 2500, active_projects: null, storage_bytes: 214748364800, max_file_size_bytes: 524288000, concurrent_ai_sessions: 8, computer_minutes_per_year: 24000, ai_budget_halalas_per_year: 200000, features: ['basic_memory', 'full_memory', 'knowledge', 'decisions', 'meetings', 'approvals', 'agent_orchestration', 'basic_analytics', 'advanced_analytics'] },
+  },
+  {
+    code: 'business', name_ar: 'الأعمال', name_en: 'Business', price_halalas: 1199900, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: false, sort_order: 3,
+    entitlements: { human_members: 30, ai_employees: 40, ai_executions_per_year: 8000, active_projects: null, storage_bytes: 1099511627776, max_file_size_bytes: 1073741824, concurrent_ai_sessions: 20, computer_minutes_per_year: 100000, ai_budget_halalas_per_year: 400000, features: ['basic_memory', 'full_memory', 'knowledge', 'decisions', 'meetings', 'approvals', 'advanced_approvals', 'agent_orchestration', 'advanced_orchestration', 'basic_analytics', 'advanced_analytics', 'advanced_permissions', 'audit_logs', 'priority_support', 'archive_uploads'] },
   },
   {
     code: 'enterprise', name_ar: 'المؤسسات', name_en: 'Enterprise', price_halalas: null, currency: 'SAR', billing_interval: 'yearly', is_popular: false, is_custom: true, sort_order: 4,
     entitlements: { human_members: null, ai_employees: null, ai_executions_per_year: null, active_projects: null, storage_bytes: null, max_file_size_bytes: 2147483648, concurrent_ai_sessions: 50, computer_minutes_per_year: null, ai_budget_halalas_per_year: null, features: ['basic_memory', 'full_memory', 'knowledge', 'decisions', 'meetings', 'approvals', 'advanced_approvals', 'agent_orchestration', 'advanced_orchestration', 'basic_analytics', 'advanced_analytics', 'advanced_permissions', 'audit_logs', 'priority_support', 'archive_uploads'] },
   },
 ];
-export const DEMO_PLAN = PLANS[2]!; // Business — shows every feature
+export const DEMO_PLAN = PLANS[3]!; // Business — shows every feature
 
 export const OWNER_PERMISSIONS = [...DEFAULT_ROLE_PERMISSIONS.owner];
 

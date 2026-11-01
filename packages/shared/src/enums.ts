@@ -131,7 +131,7 @@ export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 export const ENTERPRISE_REQUEST_STATUSES = ['pending', 'approved', 'rejected', 'converted'] as const;
 export type EnterpriseRequestStatus = (typeof ENTERPRISE_REQUEST_STATUSES)[number];
 
-export const PLAN_CODES = ['starter', 'pro', 'business', 'enterprise'] as const;
+export const PLAN_CODES = ['launch', 'starter', 'pro', 'business', 'enterprise'] as const;
 export type PlanCode = (typeof PLAN_CODES)[number];
 
 export const NOTIFICATION_TYPES = [

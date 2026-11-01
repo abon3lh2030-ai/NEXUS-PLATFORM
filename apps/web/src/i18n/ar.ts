@@ -33,7 +33,7 @@ export const ar = {
     execute_internal: 'ينفّذ الإجراءات الداخلية، والحساسة تحتاج موافقة.',
     autonomous: 'يعمل باستقلالية ضمن صلاحياته، وأوامر الطرفية تحتاج موافقة دائمًا.',
   },
-  plans: { starter: 'المبتدئة', pro: 'الاحترافية', business: 'الأعمال', enterprise: 'المؤسسات' },
+  plans: { launch: 'الانطلاقة', starter: 'المبتدئة', pro: 'الاحترافية', business: 'الأعمال', enterprise: 'المؤسسات' },
   features: {
     basic_memory: 'ذاكرة أساسية', full_memory: 'ذاكرة كاملة', knowledge: 'مركز المعرفة', decisions: 'القرارات', meetings: 'الاجتماعات', approvals: 'الموافقات',
     advanced_approvals: 'موافقات متقدمة', agent_orchestration: 'تنسيق الوكلاء', advanced_orchestration: 'تنسيق متقدم', basic_analytics: 'تحليلات أساسية',

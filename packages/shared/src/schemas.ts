@@ -346,7 +346,7 @@ export const aiFileAccessSchema = z.object({
 /* ------------------------------ Billing ------------------------------ */
 
 export const checkoutSchema = z.object({
-  plan_code: z.enum(['starter', 'pro', 'business']),
+  plan_code: z.enum(['launch', 'starter', 'pro', 'business']),
 });
 
 export const enterpriseOfferCheckoutSchema = z.object({
