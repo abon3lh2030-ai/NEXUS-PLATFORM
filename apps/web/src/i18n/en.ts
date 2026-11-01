@@ -400,7 +400,7 @@ export const en: typeof ar = {
   pricing: {
     title: 'Clear annual pricing', subtitle: 'Choose the plan that fits your company. Annual billing only.', popular: 'Most popular', custom: 'Custom',
     year: 'year', annualOnly: 'Billed annually only', unlimited: 'Unlimited', humans: 'Human members', aiEmployees: 'AI employees', projects: 'Active projects',
-    executions: 'AI executions per year', storage: 'Storage', requestCustom: 'Request a custom plan', notesTitle: 'Notes',
+    executions: 'AI executions per year', storage: 'Storage', requestCustom: 'Request a custom plan', enterpriseBlurb: 'For large organizations that need higher limits and custom integrations. We tailor the plan to your size and needs.', enterprisePoints: ['Custom limits on everything', 'Every feature', 'Files up to 2 GB', 'Priority support'], notesTitle: 'Notes',
     notes: ['Prices are in Saudi Riyals and billed annually.', 'The platform is currently available only to companies registered in Saudi Arabia.', 'Renewing early never loses remaining days.', 'All plans are subject to a fair-use AI policy; your usage level is shown on the billing page.', 'When a subscription expires, paid access stops immediately and all data is kept.'],
   },
   public: {

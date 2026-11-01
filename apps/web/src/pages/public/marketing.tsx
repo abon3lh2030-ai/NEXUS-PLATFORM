@@ -112,9 +112,12 @@ export function AiWorkforcePublicPage() {
 
 export function PlanCards({ plans, onSelect, currentPlan, busyPlan, actionLabel }: { plans: PublicPlan[]; onSelect?: (code: string) => void; currentPlan?: string | null; busyPlan?: string | null; actionLabel?: string }) {
   const { t } = useTranslation();
+  const regular = plans.filter((p) => !p.is_custom);
+  const custom = plans.filter((p) => p.is_custom);
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
-      {plans.map((p) => {
+    <div className="grid gap-6">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {regular.map((p) => {
         const e = p.entitlements;
         const limit = (v: number | null) => (v === null ? t('pricing.unlimited') : formatNumber(v));
         const rows = [
@@ -161,6 +164,24 @@ export function PlanCards({ plans, onSelect, currentPlan, busyPlan, actionLabel 
           </div>
         );
       })}
+    </div>
+      {custom.map((p) => (
+        <div key={p.code} className="flex flex-col gap-5 rounded-2xl border bg-gradient-to-l from-primary/10 via-card to-card p-6 shadow-xs md:flex-row md:items-center md:justify-between" data-testid="plan-custom">
+          <div className="max-w-2xl">
+            <div className="flex flex-wrap items-baseline gap-3">
+              <p className="text-lg font-semibold">{t(`plans.${p.code}`, p.name_en)}</p>
+              <span className="text-2xl font-semibold">{t('pricing.custom')}</span>
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t('pricing.enterpriseBlurb')}</p>
+            <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              {(t('pricing.enterprisePoints', { returnObjects: true }) as string[]).map((point) => (
+                <li key={point} className="flex items-center gap-1.5"><Check className="size-4 text-success" /> {point}</li>
+              ))}
+            </ul>
+          </div>
+          <Button asChild variant="outline" size="lg" className="shrink-0"><Link to="/enterprise">{t('pricing.requestCustom')}</Link></Button>
+        </div>
+      ))}
     </div>
   );
 }
