@@ -1,15 +1,25 @@
 /**
  * Public contact details shown on the site (footer + floating WhatsApp button).
- * Can be overridden at build time with VITE_* variables.
+ * They come only from .env (VITE_CONTACT_*), read at build time. An empty value hides that item.
  */
 const env = import.meta.env as Record<string, string | undefined>;
+const clean = (v: string | undefined) => (v ?? '').trim();
+
+/** Accepts 05XXXXXXXX, 5XXXXXXXX, +9665XXXXXXXX or 9665XXXXXXXX and returns 9665XXXXXXXX (digits only). */
+export function normalizeSaudiPhone(value: string): string {
+  const d = value.replace(/\D/g, '');
+  if (d.startsWith('966')) return d;
+  if (d.startsWith('05') && d.length === 10) return `966${d.slice(1)}`;
+  if (d.startsWith('5') && d.length === 9) return `966${d}`;
+  return d;
+}
 
 export const SITE_CONTACT = {
-  commercialRegistration: env.VITE_CONTACT_CR ?? '7055047331',
-  email: env.VITE_CONTACT_EMAIL ?? 'abdullahfah2030@hotmail.com',
+  commercialRegistration: clean(env.VITE_CONTACT_CR),
+  email: clean(env.VITE_CONTACT_EMAIL),
   /** International format, digits only (used for tel: and wa.me links). */
-  phone: env.VITE_CONTACT_PHONE ?? '966544160181',
-  whatsapp: env.VITE_CONTACT_WHATSAPP ?? '966544160181',
+  phone: normalizeSaudiPhone(clean(env.VITE_CONTACT_PHONE)),
+  whatsapp: normalizeSaudiPhone(clean(env.VITE_CONTACT_WHATSAPP)),
 };
 
 /** +966 54 416 0181 */

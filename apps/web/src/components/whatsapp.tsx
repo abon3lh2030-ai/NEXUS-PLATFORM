@@ -1,6 +1,6 @@
 import { cn } from '@nexus/ui';
 import { useTranslation } from 'react-i18next';
-import { whatsappLink } from '@/config/site';
+import { SITE_CONTACT, whatsappLink } from '@/config/site';
 
 export function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -13,6 +13,7 @@ export function WhatsAppIcon({ className }: { className?: string }) {
 /** Floating WhatsApp support button, fixed to the bottom-LEFT corner in both RTL and LTR. */
 export function WhatsAppButton({ className }: { className?: string }) {
   const { t } = useTranslation();
+  if (!SITE_CONTACT.whatsapp) return null;
   return (
     <a
       href={whatsappLink(t('contact.whatsappMessage'))}

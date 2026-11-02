@@ -29,6 +29,10 @@ export default defineConfig({
       VITE_SUPABASE_ANON_KEY: 'e2e-anon-key-not-a-secret',
       VITE_API_BASE_URL: 'http://127.0.0.1:9',
       VITE_PUBLIC_APP_URL: `http://127.0.0.1:${PORT}`,
+      VITE_CONTACT_EMAIL: 'support@example.com',
+      VITE_CONTACT_PHONE: '0500000001',
+      VITE_CONTACT_WHATSAPP: '+966 50 000 0002',
+      VITE_CONTACT_CR: '1010000000',
     },
   },
 });

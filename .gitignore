@@ -33,3 +33,10 @@ playwright-report/
 test-results/
 supabase/.temp/
 supabase/.branches/
+
+# Local media (videos, audio) — never commit
+*.mov
+*.mp4
+*.wav
+*.mp3
+*.m4a

@@ -212,3 +212,16 @@ npm run build
 ```bash
 E2E_API_URL=https://api.your-domain.sa SUPABASE_URL=… SUPABASE_ANON_KEY=… SUPABASE_SERVICE_ROLE_KEY=… npm run test:e2e
 ```
+
+## بيانات التواصل في الموقع
+
+تظهر في أسفل الموقع وفي زر واتساب العائم، وتُقرأ من `.env` فقط. أي قيمة فارغة تُخفي العنصر من الموقع.
+
+| المتغير | الوصف |
+|---|---|
+| `VITE_CONTACT_EMAIL` | البريد الظاهر في الموقع |
+| `VITE_CONTACT_PHONE` | رقم التواصل — يقبل `05XXXXXXXX` أو `+9665XXXXXXXX` |
+| `VITE_CONTACT_WHATSAPP` | رقم واتساب للدعم — بنفس الصيغة |
+| `VITE_CONTACT_CR` | رقم السجل التجاري |
+
+محليًا يتحدّث الموقع تلقائيًا بعد حفظ `.env`. على Render ضعها في متغيرات خدمة `nexus-web` ثم أعد النشر، لأنها تُضمَّن وقت البناء.

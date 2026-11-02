@@ -90,29 +90,37 @@ export function PublicLayout() {
         <div className="border-t">
           <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 sm:px-6 lg:flex-row lg:justify-between">
             <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground" data-testid="footer-contact">
+              {SITE_CONTACT.commercialRegistration && (
               <li className="flex items-center gap-2">
                 <FileBadge className="size-4 shrink-0" />
                 <span>{t('contact.cr')}:</span>
                 <span className="font-medium text-foreground" dir="ltr">{SITE_CONTACT.commercialRegistration}</span>
               </li>
+              )}
+              {SITE_CONTACT.email && (
               <li>
                 <a href={`mailto:${SITE_CONTACT.email}`} className="flex items-center gap-2 hover:text-foreground">
                   <Mail className="size-4 shrink-0" />
                   <span className="font-medium text-foreground" dir="ltr">{SITE_CONTACT.email}</span>
                 </a>
               </li>
+              )}
+              {SITE_CONTACT.phone && (
               <li>
                 <a href={`tel:+${SITE_CONTACT.phone}`} className="flex items-center gap-2 hover:text-foreground">
                   <Phone className="size-4 shrink-0" />
                   <span className="font-medium text-foreground" dir="ltr">{formatSaudiPhone(SITE_CONTACT.phone)}</span>
                 </a>
               </li>
+              )}
+              {SITE_CONTACT.whatsapp && (
               <li>
                 <a href={whatsappLink(t('contact.whatsappMessage'))} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground">
                   <WhatsAppIcon className="size-4 shrink-0 text-[#25D366]" />
                   <span className="font-medium text-foreground">{t('contact.whatsapp')}</span>
                 </a>
               </li>
+              )}
             </ul>
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} NEXUS. {t('public.footer.rights')}</p>
           </div>

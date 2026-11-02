@@ -100,3 +100,11 @@ services:
         sync: false
       - key: VITE_PUBLIC_APP_URL
         sync: false
+      - key: VITE_CONTACT_EMAIL
+        sync: false
+      - key: VITE_CONTACT_PHONE
+        sync: false
+      - key: VITE_CONTACT_WHATSAPP
+        sync: false
+      - key: VITE_CONTACT_CR
+        sync: false
