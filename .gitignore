@@ -40,3 +40,5 @@ supabase/.branches/
 *.wav
 *.mp3
 *.m4a
+/*.pptx
+/*.pdf
