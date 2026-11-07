@@ -93,7 +93,7 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const nexusAi = new NexusAiService(db, ai, work, agents, insights, entitlements);
   const platform = new PlatformService(env, db, email, audit, notifications, entitlements);
   const presentations = new PresentationService(db, ai, files, notifications, audit, entitlements);
-  const mail = new MailService(env, db, email, notifications, audit);
+  const mail = new MailService(env, db, email, notifications, audit, entitlements);
   const meetingProvider: MeetingProvider = env.MEETING_PROVIDER === 'recall' && env.RECALL_API_KEY ? new RecallMeetingProvider(env.RECALL_API_KEY, env.RECALL_REGION) : new NexusMeetingProvider();
   const voice: VoiceProvider = env.VOICE_PROVIDER === 'elevenlabs' && env.ELEVENLABS_API_KEY ? new ElevenLabsVoiceProvider(env.ELEVENLABS_API_KEY, env.ELEVENLABS_DEFAULT_VOICE_ID) : new NoVoiceProvider();
   const office = new OfficeService(db, ai, new NexusCalendarProvider(), meetingProvider, voice, mail, work, notifications, audit, entitlements);

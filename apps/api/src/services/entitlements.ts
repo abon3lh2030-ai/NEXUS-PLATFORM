@@ -2,6 +2,7 @@ import {
   aiWeekResetsAt,
   aiWeekStart,
   isSubscriptionActive,
+  usageMonthStart,
   weeklyAiLimit,
   type AiUsageSummary,
   type EntitlementKey,
@@ -23,8 +24,21 @@ const EMPTY: Entitlements = {
   concurrent_ai_sessions: 0,
   computer_minutes_per_year: 0,
   ai_budget_halalas_per_year: 0,
+  emails_per_month: 0,
+  meeting_bot_minutes_per_year: 0,
+  voice_characters_per_year: 0,
+  download_bytes_per_month: 0,
   features: [],
 };
+
+/** Usage that costs the platform money per unit, metered atomically against a plan cap. */
+const METERED = {
+  emails_per_month: { metric: 'emails_sent', period: 'month' },
+  meeting_bot_minutes_per_year: { metric: 'meeting_bot_minutes', period: 'year' },
+  voice_characters_per_year: { metric: 'voice_characters', period: 'year' },
+  download_bytes_per_month: { metric: 'download_bytes', period: 'month' },
+} as const satisfies Partial<Record<EntitlementKey, { metric: string; period: 'month' | 'year' }>>;
+export type MeteredKey = keyof typeof METERED;
 
 export interface BillingState {
   subscription: SubscriptionRow | null;
@@ -82,7 +96,8 @@ export class EntitlementService {
 
   async getUsage(orgId: string, state: BillingState): Promise<UsageSnapshot> {
     const period = this.periodStart(state);
-    const [members, ai, projects, storage, sessions, counters] = await Promise.all([
+    const month = usageMonthStart().toISOString();
+    const [members, ai, projects, storage, sessions, counters, monthCounters] = await Promise.all([
       this.db.from('organization_members').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'active'),
       this.db.from('ai_employees').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).is('deleted_at', null),
       this.db
@@ -98,8 +113,11 @@ export class EntitlementService {
         .eq('organization_id', orgId)
         .in('status', ['preparing', 'running']),
       this.db.from('usage_counters').select('metric,value').eq('organization_id', orgId).eq('period_start', period),
+      this.db.from('usage_counters').select('metric,value').eq('organization_id', orgId).eq('period_start', month),
     ]);
-    const counterMap = new Map(((counters.data ?? []) as Array<{ metric: string; value: number }>).map((c) => [c.metric, Number(c.value)]));
+    const toMap = (rows: unknown) => new Map(((rows ?? []) as Array<{ metric: string; value: number }>).map((c) => [c.metric, Number(c.value)]));
+    const counterMap = toMap(counters.data);
+    const monthMap = toMap(monthCounters.data);
     const storageRow = ((storage.data ?? []) as Array<{ used_bytes: number; file_count: number }>)[0];
     return {
       human_members: members.count ?? 0,
@@ -110,6 +128,10 @@ export class EntitlementService {
       ai_executions_per_year: counterMap.get('ai_executions') ?? 0,
       computer_minutes_per_year: Math.ceil((counterMap.get('computer_seconds') ?? 0) / 60),
       ai_budget_halalas_per_year: this.microUsdToHalalas(counterMap.get('ai_cost_micro_usd') ?? 0),
+      emails_per_month: monthMap.get(METERED.emails_per_month.metric) ?? 0,
+      meeting_bot_minutes_per_year: counterMap.get(METERED.meeting_bot_minutes_per_year.metric) ?? 0,
+      voice_characters_per_year: counterMap.get(METERED.voice_characters_per_year.metric) ?? 0,
+      download_bytes_per_month: monthMap.get(METERED.download_bytes_per_month.metric) ?? 0,
     };
   }
 
@@ -188,6 +210,38 @@ export class EntitlementService {
     });
     if (error) throw new AppError(500, 'usage_error', error.message);
     if (data !== true) throw paymentRequired('plan_limit_reached', { key: 'ai_executions_per_year' });
+  }
+
+  /**
+   * Atomically consumes `amount` of a cost-bearing allowance, or throws 402 `plan_limit_reached` and
+   * consumes nothing. Fails closed: a plan without the key gets 0, never unlimited.
+   */
+  async consume(orgId: string, state: BillingState, key: MeteredKey, amount: number): Promise<void> {
+    if (!state.active) throw paymentRequired('subscription_required');
+    if (amount <= 0) return;
+    const { metric, period } = METERED[key];
+    const limit = state.entitlements[key] === undefined ? 0 : state.entitlements[key];
+    const { data, error } = await this.db.rpc('try_consume_usage_amount', {
+      p_org: orgId,
+      p_metric: metric,
+      p_period_start: period === 'month' ? usageMonthStart().toISOString() : this.periodStart(state),
+      p_limit: limit,
+      p_amount: Math.ceil(amount),
+    });
+    if (error) throw new AppError(500, 'usage_error', error.message);
+    if (data !== true) throw paymentRequired('plan_limit_reached', { key, limit });
+  }
+
+  /** Gives back an allowance consumed for work that then failed before it cost anything. */
+  async release(orgId: string, state: BillingState, key: MeteredKey, amount: number): Promise<void> {
+    if (amount <= 0) return;
+    const { metric, period } = METERED[key];
+    await this.db.rpc('increment_usage', {
+      p_org: orgId,
+      p_metric: metric,
+      p_period_start: period === 'month' ? usageMonthStart().toISOString() : this.periodStart(state),
+      p_amount: -Math.ceil(amount),
+    });
   }
 
   async addComputerSeconds(orgId: string, state: BillingState, seconds: number): Promise<void> {

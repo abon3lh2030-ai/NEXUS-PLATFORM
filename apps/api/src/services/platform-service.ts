@@ -10,6 +10,7 @@ import type { EntitlementService } from './entitlements.js';
 import type { NotificationService } from './notifications.js';
 
 const ENTERPRISE_AI_BUDGET_SHARE = 0.4;
+const ENTERPRISE_COST_KEYS = ['storage_bytes', 'computer_minutes_per_year', 'emails_per_month', 'meeting_bot_minutes_per_year', 'voice_characters_per_year', 'download_bytes_per_month'] as const;
 const OFFER_TTL_DAYS = 30;
 
 /** Public forms + super-admin operations (platform level, not organization level). */
@@ -157,6 +158,10 @@ export class PlatformService {
     // An enterprise offer is never AI-unlimited by accident: default AI budget = 40% of the price.
     if (entitlements.ai_budget_halalas_per_year === undefined || entitlements.ai_budget_halalas_per_year === null) {
       entitlements.ai_budget_halalas_per_year = Math.round(input.price_sar * 100 * ENTERPRISE_AI_BUDGET_SHARE);
+    }
+    // ...and nothing else that costs money per unit is unlimited either: a blank value takes the Enterprise plan default.
+    for (const key of ENTERPRISE_COST_KEYS) {
+      if (entitlements[key] === undefined || entitlements[key] === null) entitlements[key] = base?.entitlements[key] ?? 0;
     }
     const offer = unwrap(
       await this.db

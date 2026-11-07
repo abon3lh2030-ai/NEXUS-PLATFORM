@@ -149,6 +149,10 @@ export function BillingPage() {
               <UsageRow label={t('pricing.projects')} used={data.usage.active_projects} limit={e.active_projects} />
               <UsageRow label={t('pricing.storage')} used={data.usage.storage_bytes} limit={e.storage_bytes} bytes />
               <UsageRow label={t('billing.computerMinutes')} used={data.usage.computer_minutes_per_year} limit={e.computer_minutes_per_year} />
+              <UsageRow label={t('billing.emailsMonth')} used={data.usage.emails_per_month} limit={e.emails_per_month} />
+              <UsageRow label={t('billing.transferMonth')} used={data.usage.download_bytes_per_month} limit={e.download_bytes_per_month} bytes />
+              {e.meeting_bot_minutes_per_year !== 0 && <UsageRow label={t('billing.meetingBotMinutes')} used={data.usage.meeting_bot_minutes_per_year} limit={e.meeting_bot_minutes_per_year} />}
+              {e.voice_characters_per_year !== 0 && <UsageRow label={t('billing.voiceCharacters')} used={data.usage.voice_characters_per_year} limit={e.voice_characters_per_year} />}
               <UsageRow label={t('billing.aiWeek')} used={data.ai_usage.week_pct ?? 0} limit={data.ai_usage.week_pct === null ? null : 100} percent hint={t('billing.aiWeekHint', { date: formatDateTime(data.ai_usage.week_resets_at) })} />
               <UsageRow label={t('billing.aiBudget')} used={data.ai_usage.year_pct ?? 0} limit={data.ai_usage.year_pct === null ? null : 100} percent hint={t('billing.aiBudgetHint')} />
             </div>

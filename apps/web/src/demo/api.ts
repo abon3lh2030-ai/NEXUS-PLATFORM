@@ -280,7 +280,7 @@ const routes: Array<[string, RegExp, Handler]> = [
   // ---------- billing ----------
   ['GET', /^\/billing$/, () => ({
     subscription: { plan_code: DEMO_PLAN.code, status: 'active', started_at: dayOffset(-65), ends_at: dayOffset(300) }, plan: DEMO_PLAN, active: true, entitlements: DEMO_PLAN.entitlements,
-    usage: { human_members: db.members.length, ai_employees: live(db.ai_employees).length, ai_executions_per_year: 37, active_projects: 2, storage_bytes: live(db.files).reduce((a, f) => a + Number(f.size), 0), concurrent_ai_sessions: 1, computer_minutes_per_year: 214, ai_budget_halalas_per_year: 1390 },
+    usage: { human_members: db.members.length, ai_employees: live(db.ai_employees).length, ai_executions_per_year: 37, active_projects: 2, storage_bytes: live(db.files).reduce((a, f) => a + Number(f.size), 0), concurrent_ai_sessions: 1, computer_minutes_per_year: 214, ai_budget_halalas_per_year: 1390, emails_per_month: 46, meeting_bot_minutes_per_year: 180, voice_characters_per_year: 3200, download_bytes_per_month: 1610612736 },
     ai_usage: aiUsage(),
     plans: PLANS, transactions: [{ id: 'txn-1', plan_code: DEMO_PLAN.code, amount_halalas: DEMO_PLAN.price_halalas, status: 'paid', payment_method: 'creditcard', provider_metadata: { masked_number: '4111 XXXX XXXX 1111', company: 'visa' }, paid_at: dayOffset(-65), created_at: dayOffset(-65) }],
     payments_enabled: true, apple_pay_enabled: false,

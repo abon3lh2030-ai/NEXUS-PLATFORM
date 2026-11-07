@@ -180,8 +180,19 @@ export class OfficeService {
     if (!meeting.meeting_link) throw badRequest('meeting_link_required');
     const { data: policy } = await this.db.from('communication_policies').select('require_participant_consent').eq('organization_id', ai.orgId).maybeSingle<{ require_participant_consent: boolean }>();
     if ((policy?.require_participant_consent ?? true) && !meeting.consent_confirmed) throw conflict('participant_consent_required');
-    const bot = await this.meetings.joinMeeting({ meetingUrl: meeting.meeting_link, botName: aiMeetingDisplayName(ai.name, language) });
-    const s = await record(bot.status, { provider_bot_id: bot.providerBotId, joined_at: new Date().toISOString() });
+    // The bot's time in the call is paid per minute: reserve the meeting's length up front, and the
+    // deadline sweep (enforceBotDeadlines) makes it leave when that time is over.
+    const billing = await this.entitlements.getBillingState(ai.orgId);
+    const minutes = Math.max(15, Math.min(480, meeting.duration_minutes));
+    await this.entitlements.consume(ai.orgId, billing, 'meeting_bot_minutes_per_year', minutes);
+    let bot;
+    try {
+      bot = await this.meetings.joinMeeting({ meetingUrl: meeting.meeting_link, botName: aiMeetingDisplayName(ai.name, language) });
+    } catch (err) {
+      await this.entitlements.release(ai.orgId, billing, 'meeting_bot_minutes_per_year', minutes).catch(() => undefined);
+      throw err;
+    }
+    const s = await record(bot.status, { provider_bot_id: bot.providerBotId, joined_at: new Date().toISOString(), bot_deadline: new Date(Date.now() + minutes * 60_000).toISOString() });
     await this.db.from('ai_employees').update({ status: 'in_meeting' }).eq('id', ai.aiEmployeeId);
     await this.audit.audit({ organizationId: ai.orgId, actorType: 'ai', actorAiEmployeeId: ai.aiEmployeeId, action: 'meeting.joined', targetType: 'meeting', targetId: meetingId, metadata: { provider: this.meetings.name } });
     await this.notifications.notifyRoles(ai.orgId, ['owner', 'admin', 'manager'], { type: 'ai_joined_meeting', title: meeting.title, body: ai.name, link: `/app/meetings/${meetingId}` });
@@ -196,6 +207,24 @@ export class OfficeService {
     await this.db.from('meeting_sessions').update({ status: 'left', left_at: new Date().toISOString() }).eq('id', s.id);
     await this.db.from('ai_employees').update({ status: 'idle' }).eq('id', s.ai_employee_id);
     await this.audit.audit({ organizationId: actor.orgId, actorType: 'human', actorUserId: actor.userId, action: 'meeting.left', targetType: 'meeting', targetId: s.meeting_id });
+  }
+
+  /** Cron: meeting bots whose reserved minutes are over are made to leave (they are billed while in the call). */
+  async enforceBotDeadlines(): Promise<number> {
+    const { data } = await this.db
+      .from('meeting_sessions')
+      .select('id, provider_bot_id, ai_employee_id')
+      .not('provider_bot_id', 'is', null)
+      .in('status', ['joining', 'in_meeting', 'presenting'])
+      .lt('bot_deadline', new Date().toISOString())
+      .limit(100);
+    const rows = (data ?? []) as Array<{ id: string; provider_bot_id: string; ai_employee_id: string }>;
+    for (const r of rows) {
+      await this.meetings.leaveMeeting(r.provider_bot_id).catch(() => undefined);
+      await this.db.from('meeting_sessions').update({ status: 'left', left_at: new Date().toISOString(), failure_reason: 'time_limit_reached' }).eq('id', r.id);
+      await this.db.from('ai_employees').update({ status: 'idle' }).eq('id', r.ai_employee_id);
+    }
+    return rows.length;
   }
 
   /** Pulls the provider transcript into meeting_transcripts (respecting the retention policy). */
@@ -326,7 +355,18 @@ export class OfficeService {
     if (!profile.enabled) throw new AppError(409, 'voice_disabled');
     const { data: emp } = await this.db.from('ai_employees').select('name').eq('id', aiEmployeeId).single<{ name: string }>();
     const intro = introduce ? (profile.language === 'ar' ? `مرحبًا، أنا ${emp?.name}، مساعد ذكاء اصطناعي. ` : `Hello, I'm ${emp?.name}, an AI assistant. `) : '';
-    const out = await this.voice.textToSpeech({ text: intro + text, voiceId: profile.voice_id, language: profile.language });
+    if (!this.voice.capabilities.tts) throw new ProviderNotConnectedError('voice', 'tts');
+    // Text-to-speech is billed per character (the provider truncates at 2,500).
+    const spoken = (intro + text).slice(0, 2500);
+    const billing = await this.entitlements.getBillingState(orgId);
+    await this.entitlements.consume(orgId, billing, 'voice_characters_per_year', spoken.length);
+    let out;
+    try {
+      out = await this.voice.textToSpeech({ text: spoken, voiceId: profile.voice_id, language: profile.language });
+    } catch (err) {
+      await this.entitlements.release(orgId, billing, 'voice_characters_per_year', spoken.length).catch(() => undefined);
+      throw err;
+    }
     await this.audit.audit({ organizationId: orgId, actorType: 'ai', actorAiEmployeeId: aiEmployeeId, action: 'voice.started', metadata: { chars: text.length } });
     return out;
   }

@@ -13,6 +13,14 @@ export const ENTITLEMENT_KEYS = [
   'computer_minutes_per_year',
   /** Annual AI spend ceiling (estimated provider cost, SAR halalas). Every AI call is refused once used up. */
   'ai_budget_halalas_per_year',
+  /** AI employee emails sent through the email provider, per calendar month (Riyadh). */
+  'emails_per_month',
+  /** Minutes a meeting bot may spend in live calls. */
+  'meeting_bot_minutes_per_year',
+  /** Text-to-speech characters. */
+  'voice_characters_per_year',
+  /** File bytes served out of storage (downloads, previews, AI reads), per calendar month (Riyadh). */
+  'download_bytes_per_month',
 ] as const;
 export type EntitlementKey = (typeof ENTITLEMENT_KEYS)[number];
 
@@ -60,6 +68,10 @@ export interface UsageSnapshot {
   concurrent_ai_sessions: number;
   computer_minutes_per_year: number;
   ai_budget_halalas_per_year: number;
+  emails_per_month: number;
+  meeting_bot_minutes_per_year: number;
+  voice_characters_per_year: number;
+  download_bytes_per_month: number;
 }
 
 /**
@@ -94,6 +106,12 @@ export function aiWeekStart(now: Date = new Date()): Date {
   const local = new Date(now.getTime() + RIYADH_OFFSET_MS);
   const startLocal = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() - local.getUTCDay());
   return new Date(startLocal - RIYADH_OFFSET_MS);
+}
+
+/** Start of the current usage month: the 1st, 00:00 Riyadh time (monthly caps reset then). */
+export function usageMonthStart(now: Date = new Date()): Date {
+  const local = new Date(now.getTime() + RIYADH_OFFSET_MS);
+  return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1) - RIYADH_OFFSET_MS);
 }
 
 export function aiWeekResetsAt(now: Date = new Date()): Date {

@@ -14,6 +14,7 @@ import type { Db } from '../../lib/supabase.js';
 import type { FileRow } from '../../types/db.js';
 import type { AuditService } from '../audit.js';
 import type { EmailService } from '../email/provider.js';
+import type { EntitlementService } from '../entitlements.js';
 import { escapeHtml } from '../email/templates.js';
 import { aiCanReadFile } from '../files/access-policy.js';
 import { FILES_BUCKET } from '../files/storage-keys.js';
@@ -55,6 +56,8 @@ export interface EmailMessageRow {
 
 const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+/** Inbound emails accepted per mailbox per 24h — keeps spam from filling the database. */
+const MAX_INBOUND_PER_DAY = 200;
 
 export function slugForMailbox(name: string, id: string): string {
   const ascii = name
@@ -77,6 +80,7 @@ export class MailService {
     private readonly email: EmailService,
     private readonly notifications: NotificationService,
     private readonly audit: AuditService,
+    private readonly entitlements: EntitlementService,
   ) {}
 
   get deliveryAvailable(): boolean {
@@ -274,10 +278,15 @@ export class MailService {
     }
     const [{ data: org }, { data: att }] = await Promise.all([
       this.db.from('organizations').select('name, default_locale').eq('id', msg.organization_id).single<{ name: string; default_locale: 'ar' | 'en' }>(),
-      this.db.from('email_attachments').select('file_id, company_files(original_name, storage_key)').eq('message_id', msg.id),
+      this.db.from('email_attachments').select('file_id, company_files(original_name, storage_key, size)').eq('message_id', msg.id),
     ]);
+    // Every recipient is one email billed by the provider; attachments are read out of storage.
+    const attRows = (att ?? []) as unknown as Array<{ company_files: { original_name: string; storage_key: string; size: number } }>;
+    const billing = await this.entitlements.getBillingState(msg.organization_id);
+    await this.entitlements.consume(msg.organization_id, billing, 'emails_per_month', msg.to_addresses.length + msg.cc_addresses.length);
+    await this.entitlements.consume(msg.organization_id, billing, 'download_bytes_per_month', attRows.reduce((a, r) => a + Number(r.company_files.size), 0));
     const attachments: Array<{ filename: string; contentBase64: string }> = [];
-    for (const a of (att ?? []) as unknown as Array<{ company_files: { original_name: string; storage_key: string } }>) {
+    for (const a of attRows) {
       const { data } = await this.db.storage.from(FILES_BUCKET).download(a.company_files.storage_key);
       if (data) attachments.push({ filename: a.company_files.original_name, contentBase64: Buffer.from(await data.arrayBuffer()).toString('base64') });
     }
@@ -339,6 +348,9 @@ export class MailService {
   async receive(input: { to: string; from: string; subject: string; text: string; providerMessageId: string | null }) {
     const { data: mailbox } = await this.db.from('employee_mailboxes').select('*').eq('address', normalizeEmail(input.to)).eq('status', 'active').maybeSingle<MailboxRow>();
     if (!mailbox) return { accepted: false };
+    const since = new Date(Date.now() - 86400_000).toISOString();
+    const { count: today } = await this.db.from('email_messages').select('id', { count: 'exact', head: true }).eq('mailbox_id', mailbox.id).eq('direction', 'inbound').gte('received_at', since);
+    if ((today ?? 0) >= MAX_INBOUND_PER_DAY) return { accepted: false, reason: 'inbound_daily_limit' };
     const thread = unwrap(await this.db.from('email_threads').insert({ organization_id: mailbox.organization_id, mailbox_id: mailbox.id, subject: input.subject.slice(0, 300) }).select('id').single<{ id: string }>());
     const msg = unwrap(
       await this.db

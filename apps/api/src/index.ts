@@ -17,6 +17,8 @@ if (env.CRON_ENABLED) {
       });
     }, 60_000),
   );
+  // Meeting bots are billed per minute: make any bot past its reserved time leave, every minute.
+  timers.push(setInterval(() => void services.office.enforceBotDeadlines().catch((err: unknown) => app.log.error({ err }, 'bot_deadline_job_failed')), 60_000));
   // Retention & hygiene, hourly: expired meeting transcripts and abandoned uploads (> 3h in 'uploading').
   const hygiene = async () => {
     await services.db.from('meeting_transcripts').delete().lt('expires_at', new Date().toISOString());

@@ -143,6 +143,8 @@ export class AgentRuntime implements DelegationPort {
 
     // AI budget must not be used up before an execution is consumed.
     await this.d.entitlements.aiGate(p.orgId);
+    // A real virtual machine is billed per minute; the built-in storage workspace costs nothing extra.
+    if (this.d.computer.name !== 'storage_workspace') await this.d.entitlements.assertWithinLimit(p.orgId, p.billing, 'computer_minutes_per_year');
     // Metered: one AI execution per work session (atomic, server-side).
     await this.d.entitlements.consumeExecution(p.orgId, p.billing);
 

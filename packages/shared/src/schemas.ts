@@ -372,6 +372,10 @@ export const adminEnterpriseDecisionSchema = z.object({
       concurrent_ai_sessions: z.number().int().min(1).nullable(),
       computer_minutes_per_year: z.number().int().min(0).nullable(),
       ai_budget_halalas_per_year: z.number().int().min(0).nullable().optional(),
+      emails_per_month: z.number().int().min(0).nullable().optional(),
+      meeting_bot_minutes_per_year: z.number().int().min(0).nullable().optional(),
+      voice_characters_per_year: z.number().int().min(0).nullable().optional(),
+      download_bytes_per_month: z.number().int().min(0).nullable().optional(),
     })
     .optional(),
   note: text(4000).optional().default(''),

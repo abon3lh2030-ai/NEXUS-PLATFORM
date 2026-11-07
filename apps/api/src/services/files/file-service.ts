@@ -351,6 +351,8 @@ export class FileService {
     if (!file || file.uploaded_by_user_id !== actor.userId) throw notFound('file_not_found');
     if (file.status === 'ready') return file;
     if (file.status !== 'uploading') throw conflict('upload_not_pending');
+    // Verifying an upload reads it back out of storage, so it counts as file transfer too.
+    await this.entitlements.consume(actor.orgId, actor.billing, 'download_bytes_per_month', Number(file.size));
 
     await this.db.from('company_files').update({ status: 'processing' }).eq('id', file.id);
     const verdict = await this.inspectStoredObject(file, actor.billing.entitlements.max_file_size_bytes, actor.billing.entitlements.features.includes('archive_uploads'));
@@ -423,6 +425,7 @@ export class FileService {
     const file = await this.loadVisibleFile(actor, fileId);
     if (file.status !== 'ready') throw conflict('file_not_ready');
     if (!canDownloadFile(actor, file)) throw forbidden('cannot_download');
+    await this.entitlements.consume(actor.orgId, actor.billing, 'download_bytes_per_month', Number(file.size));
     const { data, error } = await this.userDb(actor)
       .storage.from(FILES_BUCKET)
       .createSignedUrl(file.storage_key, SIGNED_DOWNLOAD_TTL_SECONDS, { download: file.original_name });
@@ -441,6 +444,7 @@ export class FileService {
     if (!type?.previewable) throw badRequest('preview_not_supported');
     const limit = type.category === 'text' || type.mime === 'text/csv' ? MAX_TEXT_PREVIEW_BYTES : MAX_PREVIEW_BYTES;
     if (file.size > limit) throw tooLarge('preview_too_large');
+    await this.entitlements.consume(actor.orgId, actor.billing, 'download_bytes_per_month', Number(file.size));
     const { data, error } = await this.userDb(actor).storage.from(FILES_BUCKET).download(file.storage_key);
     if (error || !data) throw notFound('file_not_found');
     await this.logActivity(file, 'viewed', { userId: actor.userId });
@@ -639,6 +643,7 @@ export class FileService {
     }
     const type = findAllowedTypeByExtension(file.original_name);
     if (!type || (type.category !== 'text' && type.mime !== 'text/csv')) throw badRequest('ai_can_only_read_text_files');
+    await this.entitlements.consume(ai.orgId, await this.entitlements.getBillingState(ai.orgId), 'download_bytes_per_month', Number(file.size));
     const { data } = await this.db.storage.from(FILES_BUCKET).download(file.storage_key);
     if (!data) throw notFound('file_not_found');
     const buf = Buffer.from(await data.arrayBuffer());
@@ -720,6 +725,7 @@ export class FileService {
   async serviceSignedDownload(orgId: string, fileId: string): Promise<{ url: string; expires_in: number }> {
     const { data: file } = await this.db.from('company_files').select(FILE_COLUMNS).eq('id', fileId).eq('organization_id', orgId).maybeSingle<FileRow>();
     if (!file || file.deleted_at || file.purged_at || isPrivate(file)) throw notFound('file_not_found');
+    await this.entitlements.consume(orgId, await this.entitlements.getBillingState(orgId), 'download_bytes_per_month', Number(file.size));
     const { data } = await this.db.storage.from(FILES_BUCKET).createSignedUrl(file.storage_key, SIGNED_DOWNLOAD_TTL_SECONDS, { download: file.original_name });
     if (!data) throw notFound('file_not_found');
     return { url: data.signedUrl, expires_in: SIGNED_DOWNLOAD_TTL_SECONDS };
