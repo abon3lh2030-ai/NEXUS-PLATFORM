@@ -47,6 +47,7 @@ export function mockFixtures(): Record<string, MockFixture> {
         { kind: 'closing', role: null, title: 'Q&A', subtitle: '[MOCK]', points: null, note: null, left_title: null, left_points: null, right_title: null, right_points: null, metrics: null, chart_type: null, categories: null, series: null, headers: null, rows: null, milestones: null, quote: null, attribution: null },
       ],
     }),
+    team_report: () => ({ report: '[MOCK] Team report' }),
     meeting_answer: () => ({ answer: '[MOCK] Answer from the meeting material' }),
     meeting_followup: () => ({ summary: '[MOCK] Summary', minutes: '[MOCK] Minutes', decisions: [], action_items: [], followup_email: { subject: '[MOCK] Follow-up', body: '[MOCK]' } }),
   };

@@ -54,6 +54,22 @@ export function requireSuperAdmin(services: Services): preHandlerAsyncHookHandle
   };
 }
 
+const PRESENCE_WRITE_EVERY_MS = 60_000;
+const presenceWrites = new Map<string, number>();
+
+/** Records that a member is using NEXUS (for the manager's team overview); at most one write a minute per member. */
+function touchPresence(services: Services, memberId: string): void {
+  const now = Date.now();
+  if (now - (presenceWrites.get(memberId) ?? 0) < PRESENCE_WRITE_EVERY_MS) return;
+  if (presenceWrites.size > 10_000) presenceWrites.clear();
+  presenceWrites.set(memberId, now);
+  try {
+    void Promise.resolve(services.db.from('organization_members').update({ last_seen_at: new Date(now).toISOString() }).eq('id', memberId)).catch(() => undefined);
+  } catch {
+    /* presence is best-effort */
+  }
+}
+
 export interface OrgGuardOptions {
   permission?: Permission | Permission[];
   /** Require an active paid subscription (default true). Expired → 402 immediately; data is untouched. */
@@ -75,6 +91,7 @@ export async function loadActor(services: Services, req: FastifyRequest, auth: A
   if (!member || !org) throw notFound('organization_not_found');
   if (org.status === 'closed') throw forbidden('organization_closed');
 
+  touchPresence(services, member.id);
   const billing = await services.entitlements.getBillingState(orgId);
   let perms = resolvePermissions(member.role as HumanRole, (overrides ?? []) as PermissionOverride[]);
   // Advanced (custom) permissions only apply on plans that include them.

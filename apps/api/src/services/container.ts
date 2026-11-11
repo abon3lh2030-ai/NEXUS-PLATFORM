@@ -25,6 +25,7 @@ import type { OfficeTools } from './agent/tools.js';
 import { MailService } from './communications/mail-service.js';
 import { OfficeService } from './communications/office-service.js';
 import { MeetingRoomService } from './communications/meeting-room-service.js';
+import { TeamService } from './team-service.js';
 import {
   ElevenLabsVoiceProvider,
   NexusCalendarProvider,
@@ -60,6 +61,7 @@ export interface Services {
   mail: MailService;
   office: OfficeService;
   meetingRoom: MeetingRoomService;
+  team: TeamService;
 }
 
 export function createAIProvider(env: Env): AIProvider {
@@ -100,5 +102,5 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const voice: VoiceProvider = env.VOICE_PROVIDER === 'elevenlabs' && env.ELEVENLABS_API_KEY ? new ElevenLabsVoiceProvider(env.ELEVENLABS_API_KEY, env.ELEVENLABS_DEFAULT_VOICE_ID) : new NoVoiceProvider();
   const office = new OfficeService(db, ai, new NexusCalendarProvider(), meetingProvider, voice, mail, work, notifications, audit, entitlements);
   officeTools = { presentations, mail, office };
-  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office, meetingRoom: new MeetingRoomService(env, db, ai, entitlements) };
+  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office, meetingRoom: new MeetingRoomService(env, db, ai, entitlements), team: new TeamService(db, ai, entitlements) };
 }

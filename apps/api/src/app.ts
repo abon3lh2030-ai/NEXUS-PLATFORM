@@ -16,6 +16,7 @@ import { publicRoutes } from './routes/public.js';
 import { workRoutes } from './routes/work.js';
 import { officeRoutes } from './routes/office.js';
 import { meetingRoomRoutes } from './routes/meeting-room.js';
+import { teamRoutes } from './routes/team.js';
 import { createServices, type Services } from './services/container.js';
 
 export async function buildApp(env: Env, overrides: Parameters<typeof createServices>[2] = {}): Promise<{ app: FastifyInstance; services: Services }> {
@@ -84,6 +85,7 @@ export async function buildApp(env: Env, overrides: Parameters<typeof createServ
   await app.register(async (scope) => billingRoutes(scope, services));
   await app.register(async (scope) => officeRoutes(scope, services));
   await app.register(async (scope) => meetingRoomRoutes(scope, services));
+  await app.register(async (scope) => teamRoutes(scope, services));
   await app.register(async (scope) => adminRoutes(scope, services));
 
   return { app, services };

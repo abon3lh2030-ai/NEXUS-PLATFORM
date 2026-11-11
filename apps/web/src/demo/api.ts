@@ -277,6 +277,35 @@ const routes: Array<[string, RegExp, Handler]> = [
   ['POST', /^\/mail\/messages\/([^/]+)\/send$/, disabled],
   ['POST', /^\/mail\/messages\/([^/]+)\/archive$/, (m) => Object.assign(byId(db.mail, m[1]!) ?? {}, { folder: 'archive' })],
 
+  // ---------- team overview ----------
+  ['GET', /^\/team\/overview$/, () => {
+    const now = Date.now();
+    const stats = (key: 'assignee_member_id' | 'assignee_ai_employee_id', id: string) => {
+      const mine = live(db.tasks).filter((t) => t[key] === id);
+      const open = mine.filter((t) => t.status !== 'done');
+      const done = mine.filter((t) => t.status === 'done');
+      const total = open.length + done.length;
+      return {
+        open: open.length, in_progress: open.filter((t) => t.status === 'in_progress').length, review: open.filter((t) => t.status === 'review').length, blocked: open.filter((t) => t.status === 'blocked').length,
+        overdue: open.filter((t) => t.due_date && Date.parse(String(t.due_date)) < now).length, done_7d: done.length, done_30d: done.length, progress_pct: total ? Math.round((done.length / total) * 100) : null,
+        current: open.slice(0, 3).map((t) => ({ id: t.id, title: t.title, status: t.status, due_date: t.due_date ?? null })), last_task_activity_at: dayOffset(0),
+      };
+    };
+    const humans = db.members.map((m, i) => ({ member_id: m.id, user_id: m.user_id, name: m.full_name, role: m.role, online: i === 0, last_seen_at: i === 0 ? isoNow() : dayOffset(-1), work: stats('assignee_member_id', String(m.id)) }));
+    const sessions = db.sessions.filter((x) => ['running', 'preparing', 'queued'].includes(String(x.status)));
+    const ai = live(db.ai_employees).map((e) => {
+      const ses = sessions.find((x) => x.ai_employee_id === e.id);
+      return { ai_employee_id: e.id, name: e.name, job_title: e.job_title, status: e.status, working: !['idle', 'offline', 'completed', 'failed'].includes(String(e.status)), current_step: ses?.current_step ?? null, current_task: ses ? ((byId(db.tasks, String(ses.task_id))?.title as string | undefined) ?? null) : null, work: stats('assignee_ai_employee_id', String(e.id)) };
+    });
+    const all = [...humans.map((h) => h.work), ...ai.map((a) => a.work)];
+    return {
+      generated_at: isoNow(),
+      summary: { humans_total: humans.length, humans_online: humans.filter((h) => h.online).length, ai_total: ai.length, ai_working: ai.filter((a) => a.working).length, in_progress: all.reduce((n, w) => n + w.in_progress, 0), overdue: all.reduce((n, w) => n + w.overdue, 0), blocked: all.reduce((n, w) => n + w.blocked, 0), done_7d: all.reduce((n, w) => n + w.done_7d, 0) },
+      humans, ai,
+    };
+  }],
+  ['POST', /^\/team\/ai-report$/, disabled],
+
   // ---------- billing ----------
   ['GET', /^\/billing$/, () => ({
     subscription: { plan_code: DEMO_PLAN.code, status: 'active', started_at: dayOffset(-65), ends_at: dayOffset(300) }, plan: DEMO_PLAN, active: true, entitlements: DEMO_PLAN.entitlements,

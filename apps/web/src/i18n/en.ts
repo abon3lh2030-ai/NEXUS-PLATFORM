@@ -11,7 +11,7 @@ export const en: typeof ar = {
   nav: { calendar: 'Calendar', presentations: 'Presentations',
     overview: 'Overview', aiWorkforce: 'AI Workforce', company: 'Company', work: 'Work', knowledge: 'Knowledge', insights: 'Insights & Settings',
     dashboard: 'Dashboard', nexusAi: 'Nexus AI', notifications: 'Notifications', workforce: 'AI Employees', operations: 'Operations Room',
-    approvals: 'Approvals', orgGraph: 'Organization Graph', departments: 'Departments', companyFiles: 'Company Files', goals: 'Goals', missions: 'Missions',
+    approvals: 'Approvals', team: 'Team overview', orgGraph: 'Organization Graph', departments: 'Departments', companyFiles: 'Company Files', goals: 'Goals', missions: 'Missions',
     projects: 'Projects', tasks: 'Tasks', meetings: 'Meetings', documents: 'Documents', decisions: 'Decisions', memory: 'Company Memory',
     knowledgeCenter: 'Knowledge Center', analytics: 'Analytics', settings: 'Settings',
   },
@@ -265,6 +265,16 @@ export const en: typeof ar = {
   departments: {
     description: 'Departments with their human and AI members and workload.', empty: 'No departments', new: 'New department', parent: 'Parent department',
     leadHuman: 'Lead (human)', leadAi: 'Lead (AI)', lead: 'Lead', humans: 'Humans', ai: 'AI', workload: 'Workload',
+  },
+  team: {
+    xOfY: '{{x}} of {{y}}', description: 'All your people — humans and AI employees — in one place: who is working now, on what, and how far along.',
+    aiReport: 'AI team report', onlineNow: 'Online now', onlineHint: 'Used NEXUS in the last 5 minutes', aiWorking: 'AI employees working now',
+    inProgress: 'Tasks in progress', doneWeek: '{{count}} done this week', needsAttention: 'Needs your attention', overdueBlocked: '{{overdue}} overdue · {{blocked}} blocked',
+    filters: { all: 'All', humans: 'People', ai: 'AI', attention: 'Needs attention' },
+    online: 'Online', lastSeen: 'Last seen {{when}}', neverSeen: 'Not signed in yet', workingOn: 'Working on', progress: 'Completion (last 30 days)',
+    badges: { inProgress: '{{count}} in progress', review: '{{count}} in review', overdue: '{{count}} overdue', blocked: '{{count}} blocked', doneWeek: '{{count}} done this week' },
+    noOpenTasks: 'No open tasks.', lastTaskUpdate: 'Last task update {{when}}', empty: 'No one in this view.',
+    progressHint: 'Completion = tasks done in the last 30 days ÷ (done + currently open). "Online" means they used NEXUS in the last 5 minutes; NEXUS does not monitor employees\' devices or screens.',
   },
   room: {
     cardTitle: 'Video meeting inside NEXUS', cardBody: 'Audio, video, screen sharing, chat, live captions and an AI assistant — up to 6 participants.',

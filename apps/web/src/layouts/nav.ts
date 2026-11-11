@@ -21,6 +21,7 @@ import {
   Sparkles,
   Target,
   Users,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 import type { Permission } from '@nexus/shared';
@@ -57,6 +58,7 @@ export const NAV: NavGroup[] = [
   {
     key: 'company',
     items: [
+      { to: '/app/team', key: 'team', icon: UsersRound, permission: 'work.manage' },
       { to: '/app/org-graph', key: 'orgGraph', icon: Network },
       { to: '/app/departments', key: 'departments', icon: Users },
       { to: '/app/files', key: 'companyFiles', icon: FolderOpen, permission: 'files.shared.view' },

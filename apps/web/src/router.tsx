@@ -38,6 +38,7 @@ const Goals = m(() => import('./features/work/planning'), 'GoalsPage');
 const Departments = m(() => import('./features/work/planning'), 'DepartmentsPage');
 const Meetings = m(() => import('./features/work/knowledge'), 'MeetingsPage');
 const Meeting = m(() => import('./features/work/knowledge'), 'MeetingPage');
+const Team = m(() => import('./features/work/team-page'), 'TeamPage');
 const MeetingRoom = m(() => import('./features/office/meeting-room/meeting-room-page'), 'MeetingRoomPage');
 const Documents = m(() => import('./features/work/knowledge'), 'DocumentsPage');
 const Document = m(() => import('./features/work/knowledge'), 'DocumentPage');
@@ -105,6 +106,7 @@ export const router = createBrowserRouter([
       { path: 'workforce', element: p(<Workforce />) },
       { path: 'workforce/:id', element: p(<Employee />) },
       { path: 'operations', element: p(<Operations />) },
+      { path: 'team', element: p(<Team />) },
       { path: 'approvals', element: p(<Approvals />) },
       { path: 'org-graph', element: p(<OrgGraph />) },
       { path: 'departments', element: p(<Departments />) },

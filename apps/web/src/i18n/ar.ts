@@ -9,7 +9,7 @@ export const ar = {
   nav: { calendar: 'التقويم', presentations: 'العروض التقديمية',
     overview: 'نظرة عامة', aiWorkforce: 'القوى العاملة الذكية', company: 'الشركة', work: 'العمل', knowledge: 'المعرفة', insights: 'التحليلات والإعدادات',
     dashboard: 'لوحة التحكم', nexusAi: 'Nexus AI', notifications: 'الإشعارات', workforce: 'موظفو الذكاء الاصطناعي', operations: 'غرفة العمليات',
-    approvals: 'الموافقات', orgGraph: 'الهيكل التنظيمي', departments: 'الإدارات', companyFiles: 'ملفات الشركة', goals: 'الأهداف', missions: 'المهمات الكبرى',
+    approvals: 'الموافقات', team: 'متابعة الفريق', orgGraph: 'الهيكل التنظيمي', departments: 'الإدارات', companyFiles: 'ملفات الشركة', goals: 'الأهداف', missions: 'المهمات الكبرى',
     projects: 'المشاريع', tasks: 'المهام', meetings: 'الاجتماعات', documents: 'المستندات', decisions: 'القرارات', memory: 'ذاكرة الشركة',
     knowledgeCenter: 'مركز المعرفة', analytics: 'التحليلات', settings: 'الإعدادات',
   },
@@ -263,6 +263,16 @@ export const ar = {
   departments: {
     description: 'إدارات الشركة وأعضاؤها من البشر والذكاء الاصطناعي وحِملها.', empty: 'لا توجد إدارات', new: 'إدارة جديدة', parent: 'الإدارة الأم',
     leadHuman: 'القائد (بشري)', leadAi: 'القائد (ذكاء اصطناعي)', lead: 'القائد', humans: 'بشر', ai: 'ذكاء اصطناعي', workload: 'الحمل',
+  },
+  team: {
+    xOfY: '{{x}} من {{y}}', description: 'كل موظفيك — البشر وموظفي الذكاء الاصطناعي — في مكان واحد: من يعمل الآن، وعلى ماذا، وأين وصل.',
+    aiReport: 'تقرير الفريق بالذكاء الاصطناعي', onlineNow: 'متصلون الآن', onlineHint: 'استخدموا نيكسوس خلال آخر 5 دقائق', aiWorking: 'موظفو ذكاء اصطناعي يعملون الآن',
+    inProgress: 'مهام قيد التنفيذ', doneWeek: '{{count}} منجزة هذا الأسبوع', needsAttention: 'تحتاج انتباهك', overdueBlocked: '{{overdue}} متأخرة · {{blocked}} متعثرة',
+    filters: { all: 'الكل', humans: 'البشر', ai: 'الذكاء الاصطناعي', attention: 'تحتاج انتباه' },
+    online: 'متصل الآن', lastSeen: 'آخر ظهور {{when}}', neverSeen: 'لم يدخل بعد', workingOn: 'يعمل الآن على', progress: 'نسبة الإنجاز (آخر 30 يومًا)',
+    badges: { inProgress: '{{count}} قيد التنفيذ', review: '{{count}} للمراجعة', overdue: '{{count}} متأخرة', blocked: '{{count}} متعثرة', doneWeek: '{{count}} أُنجزت هذا الأسبوع' },
+    noOpenTasks: 'لا توجد مهام مفتوحة.', lastTaskUpdate: 'آخر تحديث على مهامه {{when}}', empty: 'لا يوجد أحد في هذا التصنيف.',
+    progressHint: 'نسبة الإنجاز = المهام المنجزة خلال آخر 30 يومًا ÷ (المنجزة + المفتوحة حاليًا). "متصل الآن" يعني أنه استخدم نيكسوس خلال آخر 5 دقائق، ولا تراقب نيكسوس أجهزة الموظفين أو شاشاتهم.',
   },
   room: {
     cardTitle: 'اجتماع فيديو داخل نيكسوس', cardBody: 'صوت وصورة ومشاركة شاشة ومحادثة وترجمة نصية مباشرة ومساعد ذكاء اصطناعي — حتى 6 مشاركين.',
