@@ -1,6 +1,6 @@
 import { Badge, Button, Checkbox, NativeSelect, Section, Textarea } from '@nexus/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Bot, FileText, Link2, LogOut, Mic, Presentation, RefreshCw, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import { Bot, FileText, Link2, LogOut, Mic, Presentation, RefreshCw, ShieldCheck, Sparkles, Users, Video } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
@@ -50,6 +50,14 @@ export function MeetingOfficePanel({ meetingId }: { meetingId: string }) {
 
   return (
     <div className="grid gap-6">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+        <Video className="size-5 text-primary" />
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">{t('room.cardTitle')}</p>
+          <p className="text-sm text-muted-foreground">{t('room.cardBody')}</p>
+        </div>
+        <Button asChild><Link to={`/app/meetings/${meetingId}/room`}><Video /> {t('room.join')}</Link></Button>
+      </div>
       <Section title={<span className="flex items-center gap-2"><Users className="size-4" /> {t('meetings.participants')}</span>}>
         <ul className="grid gap-1.5 text-sm">
           {m.participants.map((p) => (

@@ -65,6 +65,12 @@ const EnvSchema = z
     VOICE_PROVIDER: z.enum(['none', 'elevenlabs']).default('none'),
     ELEVENLABS_API_KEY: z.string().optional(),
     ELEVENLABS_DEFAULT_VOICE_ID: z.string().optional(),
+    // Internal video meetings are peer-to-peer. STUN only tells each browser its public address; an optional
+    // TURN relay (e.g. your own coturn) helps the few networks that block direct connections.
+    MEETING_STUN_URLS: csv.transform((v) => (v.length ? v : ['stun:stun.l.google.com:19302'])),
+    MEETING_TURN_URLS: csv,
+    MEETING_TURN_USERNAME: z.string().optional(),
+    MEETING_TURN_CREDENTIAL: z.string().optional(),
 
     AGENT_WORKER_ENABLED: bool.default(true),
     AGENT_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(2),

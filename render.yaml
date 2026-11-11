@@ -81,7 +81,7 @@ services:
         value: max-age=31536000; includeSubDomains
       - path: /*
         name: Permissions-Policy
-        value: camera=(), microphone=(), geolocation=(), payment=(self "https://api.moyasar.com")
+        value: camera=(self), microphone=(self), display-capture=(self), geolocation=(), payment=(self "https://api.moyasar.com")
       - path: /assets/*
         name: Cache-Control
         value: public, max-age=31536000, immutable
