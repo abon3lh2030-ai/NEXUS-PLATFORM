@@ -161,6 +161,9 @@ export const NOTIFICATION_TYPES = [
   'meeting_summary_ready',
   'followup_ready',
   'mention',
+  'signature_requested',
+  'signature_completed',
+  'signature_declined',
   'system',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

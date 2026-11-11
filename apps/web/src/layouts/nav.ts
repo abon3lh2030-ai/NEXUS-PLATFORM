@@ -8,6 +8,7 @@ import {
   Presentation,
   CalendarDays,
   CheckCircle2,
+  FileSignature,
   FileText,
   Flag,
   FolderKanban,
@@ -53,6 +54,7 @@ export const NAV: NavGroup[] = [
       { to: '/app/workforce', key: 'workforce', icon: Bot, permission: 'ai.view' },
       { to: '/app/operations', key: 'operations', icon: Activity, permission: 'ai.view' },
       { to: '/app/approvals', key: 'approvals', icon: CheckCircle2 },
+      { to: '/app/signatures', key: 'signatures', icon: FileSignature },
     ],
   },
   {

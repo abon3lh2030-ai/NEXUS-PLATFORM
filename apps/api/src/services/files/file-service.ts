@@ -687,6 +687,41 @@ export class FileService {
     return row;
   }
 
+  /** Stores a server-generated document (e.g. a signed PDF) in Shared Company Files. Type is verified by signature. */
+  async writeSharedBinary(owner: { orgId: string; userId: string; folderId: string | null }, name: string, bytes: Uint8Array): Promise<FileRow> {
+    const buf = Buffer.from(bytes);
+    const clean = sanitizeFileName(name);
+    const verdict = verifyFileContent(clean, buf.subarray(0, SNIFF_BYTES), { allowArchives: false });
+    if (!verdict.ok || !verdict.type) throw badRequest(verdict.reason ?? 'unsupported_file_type');
+    const { fileId, key } = buildStorageKey({ space: 'shared', orgId: owner.orgId });
+    const { error } = await this.db.storage.from(FILES_BUCKET).upload(key, buf, { contentType: verdict.type.mime, upsert: false });
+    if (error) throw new AppError(502, 'storage_unavailable', error.message);
+    const row = unwrap(
+      await this.db
+        .from('company_files')
+        .insert({
+          id: fileId,
+          organization_id: owner.orgId,
+          space: 'shared',
+          visibility: 'organization_shared',
+          folder_id: owner.folderId,
+          uploaded_by_user_id: owner.userId,
+          original_name: clean,
+          extension: getExtension(clean),
+          storage_key: key,
+          mime_type: verdict.type.mime,
+          category: verdict.type.category,
+          size: buf.byteLength,
+          checksum_sha256: createHash('sha256').update(buf).digest('hex'),
+          status: 'ready',
+        })
+        .select(FILE_COLUMNS)
+        .single<FileRow>(),
+    );
+    await this.logActivity(row, 'uploaded', { userId: owner.userId });
+    return row;
+  }
+
   /** Stores a generated binary artifact (e.g. PPTX) in an AI employee's workspace. Type is verified by signature. */
   async writeWorkspaceBinary(owner: { orgId: string; aiEmployeeId: string }, name: string, bytes: Buffer): Promise<FileRow> {
     const clean = sanitizeFileName(name);

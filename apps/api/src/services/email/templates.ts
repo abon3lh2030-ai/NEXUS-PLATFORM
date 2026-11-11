@@ -166,3 +166,13 @@ export function subscriptionNoticeEmail(to: string, kind: 'expiring' | 'expired'
     text: `${title}\n${url}`,
   };
 }
+
+export function signatureRequestEmail(to: string, orgName: string, title: string, from: string, url: string): EmailMessage {
+  return {
+    to,
+    template: 'signature_request',
+    subject: `طلب توقيع: ${title}`,
+    html: layout(`مطلوب توقيعك على «${escapeHtml(title)}»`, `<p>أرسل ${escapeHtml(from)} من ${escapeHtml(orgName)} مستندًا لتوقيعه أو اعتماده عبر نيكسوس.</p>`, [{ label: 'فتح المستند والتوقيع', url }]),
+    text: `أرسل ${from} من ${orgName} مستندًا لتوقيعه أو اعتماده: ${title}\n${url}`,
+  };
+}
