@@ -27,6 +27,7 @@ import { OfficeService } from './communications/office-service.js';
 import { MeetingRoomService } from './communications/meeting-room-service.js';
 import { TeamService } from './team-service.js';
 import { SignatureService } from './signatures/signature-service.js';
+import { PushService } from './push/push-service.js';
 import {
   ElevenLabsVoiceProvider,
   NexusCalendarProvider,
@@ -64,6 +65,7 @@ export interface Services {
   meetingRoom: MeetingRoomService;
   team: TeamService;
   signatures: SignatureService;
+  push: PushService;
 }
 
 export function createAIProvider(env: Env): AIProvider {
@@ -79,6 +81,12 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const ai = overrides.ai ?? createAIProvider(env);
   const audit = new AuditService(db);
   const notifications = new NotificationService(db);
+  const push = new PushService(
+    db,
+    log,
+    env.APNS_KEY_ID && env.APNS_TEAM_ID && env.APNS_PRIVATE_KEY ? { keyId: env.APNS_KEY_ID, teamId: env.APNS_TEAM_ID, privateKey: env.APNS_PRIVATE_KEY, bundleId: env.APNS_BUNDLE_ID } : null,
+  );
+  notifications.onNotify = (userIds, n) => push.push(userIds, n);
   const email = new EmailService(createEmailProvider(env, log), db, log);
   const entitlements = new EntitlementService(db, env.USD_TO_SAR_RATE, env.AI_DEFAULT_MODEL);
   const files = new FileService(env, db, entitlements, audit, new NoopScanner());
@@ -104,5 +112,5 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const voice: VoiceProvider = env.VOICE_PROVIDER === 'elevenlabs' && env.ELEVENLABS_API_KEY ? new ElevenLabsVoiceProvider(env.ELEVENLABS_API_KEY, env.ELEVENLABS_DEFAULT_VOICE_ID) : new NoVoiceProvider();
   const office = new OfficeService(db, ai, new NexusCalendarProvider(), meetingProvider, voice, mail, work, notifications, audit, entitlements);
   officeTools = { presentations, mail, office };
-  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office, meetingRoom: new MeetingRoomService(env, db, ai, entitlements), team: new TeamService(db, ai, entitlements), signatures: new SignatureService(env, db, files, entitlements, notifications, email, audit) };
+  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office, meetingRoom: new MeetingRoomService(env, db, ai, entitlements), team: new TeamService(db, ai, entitlements), signatures: new SignatureService(env, db, files, entitlements, notifications, email, audit), push };
 }

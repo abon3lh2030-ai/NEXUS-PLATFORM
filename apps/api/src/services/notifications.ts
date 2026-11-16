@@ -12,6 +12,9 @@ export interface NotifyInput {
 }
 
 export class NotificationService {
+  /** Also delivers each notification to the person's phones (set by the container when push is available). */
+  onNotify: ((userIds: string[], n: NotifyInput) => Promise<void>) | null = null;
+
   constructor(private readonly db: Db) {}
 
   async notify(n: NotifyInput): Promise<void> {
@@ -28,6 +31,7 @@ export class NotificationService {
         data: n.data ?? {},
       })),
     );
+    if (this.onNotify) void this.onNotify(unique, n).catch(() => undefined);
   }
 
   /** Notify every active member holding one of the given roles. */

@@ -1,5 +1,6 @@
 import { buildApp } from './app.js';
 import { loadEnv } from './config/env.js';
+import { notifyStuckTasks } from './services/push/stuck-tasks.js';
 
 const env = loadEnv();
 const { app, services } = await buildApp(env);
@@ -19,6 +20,8 @@ if (env.CRON_ENABLED) {
   );
   // Meeting bots are billed per minute: make any bot past its reserved time leave, every minute.
   timers.push(setInterval(() => void services.office.enforceBotDeadlines().catch((err: unknown) => app.log.error({ err }, 'bot_deadline_job_failed')), 60_000));
+  // Stuck-task reminders (blocked or overdue), hourly; each task at most once a day.
+  timers.push(setInterval(() => void notifyStuckTasks(services.db, services.notifications).catch((err: unknown) => app.log.error({ err }, 'stuck_tasks_job_failed')), 60 * 60_000));
   // Retention & hygiene, hourly: expired meeting transcripts and abandoned uploads (> 3h in 'uploading').
   const hygiene = async () => {
     await services.db.from('meeting_transcripts').delete().lt('expires_at', new Date().toISOString());

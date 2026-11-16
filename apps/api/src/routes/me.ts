@@ -48,6 +48,17 @@ export async function meRoutes(app: FastifyInstance, s: Services) {
     return data ?? [];
   });
 
+  /* Phone notifications (NEXUS iOS app). */
+  app.post('/me/push-tokens', { config: { rateLimit: { max: 20, timeWindow: '10 minutes' } } }, async (req) => {
+    const b = parse(z.object({ token: z.string().regex(/^[0-9a-fA-F]{32,200}$/), environment: z.enum(['development', 'production']).default('production'), app_version: z.string().max(40).optional() }), req.body);
+    return s.push.register(authOf(req).userId, b);
+  });
+  app.delete('/me/push-tokens/:token', async (req) => {
+    const { token } = parse(z.object({ token: z.string().regex(/^[0-9a-fA-F]{32,200}$/) }), req.params);
+    await s.push.unregister(authOf(req).userId, token);
+    return { ok: true };
+  });
+
   app.post('/notifications/read', async (req) => {
     const auth = authOf(req);
     const { ids } = parse(z.object({ ids: z.array(z.uuid()).max(200).optional() }), req.body ?? {});

@@ -72,6 +72,12 @@ const EnvSchema = z
     MEETING_TURN_USERNAME: z.string().optional(),
     MEETING_TURN_CREDENTIAL: z.string().optional(),
 
+    // Phone notifications for the NEXUS iOS app, sent straight to Apple (APNs). All four are needed to push.
+    APNS_KEY_ID: z.string().optional(),
+    APNS_TEAM_ID: z.string().optional(),
+    APNS_PRIVATE_KEY: z.string().optional(),
+    APNS_BUNDLE_ID: z.string().default('com.nexusarabia.app'),
+
     AGENT_WORKER_ENABLED: bool.default(true),
     AGENT_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(2),
     AGENT_POLL_INTERVAL_MS: z.coerce.number().int().min(250).default(2000),

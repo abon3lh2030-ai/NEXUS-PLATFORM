@@ -240,3 +240,20 @@ E2E_API_URL=https://api.your-domain.sa SUPABASE_URL=… SUPABASE_ANON_KEY=… SU
 | `VITE_CONTACT_CR` | رقم السجل التجاري |
 
 محليًا يتحدّث الموقع تلقائيًا بعد حفظ `.env`. على Render ضعها في متغيرات خدمة `nexus-web` ثم أعد النشر، لأنها تُضمَّن وقت البناء.
+
+---
+
+## إشعارات تطبيق iOS (Apple Push Notifications)
+
+ترسل المنصة الإشعارات لجوالات المستخدمين **مباشرة إلى Apple (APNs)**، بدون أي خدمة وسيطة. إذا لم تُضبط هذه القيم، تعمل الإشعارات داخل المنصة كالمعتاد، ولا يُرسل شيء للجوال.
+
+| المتغير | من أين؟ |
+|---|---|
+| `APNS_KEY_ID` | Apple Developer → Certificates, IDs & Profiles → **Keys** → أنشئ مفتاحًا مفعّلًا عليه Apple Push Notifications service، ثم انسخ Key ID |
+| `APNS_TEAM_ID` | Team ID من صفحة Membership في حساب Apple Developer |
+| `APNS_PRIVATE_KEY` | محتوى ملف `AuthKey_XXXX.p8` في سطر واحد، مع `\n` مكان أسطر الملف |
+| `APNS_BUNDLE_ID` | معرّف التطبيق، والافتراضي `com.nexusarabia.app` |
+
+- تُحفظ أجهزة المستخدمين في جدول `device_push_tokens`، وتُعطَّل تلقائيًا عندما تبلغ Apple أن الرمز لم يعد صالحًا.
+- الموافقات البسيطة تصل بزرّي «موافقة» و«رفض». الموافقات الحساسة تفتح التطبيق، ويُطلب فيها Face ID.
+- تذكير المهام المتعثرة (المتوقفة أو المتأخرة) يعمل كل ساعة، ولا يتكرر لنفس المهمة أكثر من مرة في اليوم.
