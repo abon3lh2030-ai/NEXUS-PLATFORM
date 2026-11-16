@@ -7,3 +7,4 @@ export * from './ai.js';
 export * from './schemas.js';
 export * from './presentations.js';
 export * from './communications.js';
+export * from './founder.js';

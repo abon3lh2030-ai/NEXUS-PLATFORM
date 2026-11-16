@@ -21,7 +21,7 @@ function tokenKey(token: string): string {
 }
 
 /** Verifies the Supabase JWT with the Auth server (not just locally decoded). */
-export async function resolveAuth(services: Services, req: FastifyRequest): Promise<AuthUser> {
+export async function resolveAuth(services: Services, req: FastifyRequest, opts: { fresh?: boolean } = {}): Promise<AuthUser> {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) throw unauthorized();
   const token = header.slice(7).trim();
@@ -29,12 +29,16 @@ export async function resolveAuth(services: Services, req: FastifyRequest): Prom
 
   const key = tokenKey(token);
   const cached = tokenCache.get(key);
-  if (cached && Date.now() - cached.at < TOKEN_CACHE_TTL_MS) return { ...cached.user, token };
+  // `fresh` (Founder Portal) re-verifies every request, so a revoked session stops working at once.
+  if (!opts.fresh && cached && Date.now() - cached.at < TOKEN_CACHE_TTL_MS) return { ...cached.user, token };
 
   const { data, error } = await services.db.auth.getUser(token);
   if (error || !data.user) throw unauthorized('invalid_token');
-  const { data: admin } = await services.db.from('platform_admins').select('user_id').eq('user_id', data.user.id).maybeSingle();
-  const user = { userId: data.user.id, email: data.user.email ?? null, isSuperAdmin: Boolean(admin) };
+  const [{ data: admin }, { data: founder }] = await Promise.all([
+    services.db.from('platform_admins').select('user_id').eq('user_id', data.user.id).maybeSingle(),
+    services.db.from('founder_accounts').select('user_id').eq('user_id', data.user.id).maybeSingle(),
+  ]);
+  const user = { userId: data.user.id, email: data.user.email ?? null, isSuperAdmin: Boolean(admin), isFounder: Boolean(founder) };
   if (tokenCache.size > 5000) tokenCache.clear();
   tokenCache.set(key, { user, at: Date.now() });
   return { ...user, token };

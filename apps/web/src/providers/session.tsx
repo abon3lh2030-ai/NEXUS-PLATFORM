@@ -10,6 +10,7 @@ export interface MeResponse {
   user_id: string;
   email: string | null;
   is_super_admin: boolean;
+  is_founder?: boolean;
   profile: { full_name: string; locale: 'ar' | 'en'; theme: string; avatar_url: string | null } | null;
   organizations: Array<{ id: string; name: string; status: string; verification_status: string; role: HumanRole }>;
 }

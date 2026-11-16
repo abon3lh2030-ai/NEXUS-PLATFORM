@@ -18,7 +18,7 @@ export async function meRoutes(app: FastifyInstance, s: Services) {
   app.get('/me', async (req) => {
     const auth = authOf(req);
     const { data: profile } = await s.db.from('profiles').select('*').eq('id', auth.userId).maybeSingle();
-    return { user_id: auth.userId, email: auth.email, is_super_admin: auth.isSuperAdmin, profile, organizations: await s.orgs.listForUser(auth) };
+    return { user_id: auth.userId, email: auth.email, is_super_admin: auth.isSuperAdmin, is_founder: Boolean(auth.isFounder), profile, organizations: await s.orgs.listForUser(auth) };
   });
 
   app.patch('/me', async (req) => {

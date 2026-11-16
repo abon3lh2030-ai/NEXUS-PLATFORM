@@ -28,6 +28,7 @@ import { MeetingRoomService } from './communications/meeting-room-service.js';
 import { TeamService } from './team-service.js';
 import { SignatureService } from './signatures/signature-service.js';
 import { PushService } from './push/push-service.js';
+import { FounderService } from './founder/founder-service.js';
 import {
   ElevenLabsVoiceProvider,
   NexusCalendarProvider,
@@ -66,6 +67,7 @@ export interface Services {
   team: TeamService;
   signatures: SignatureService;
   push: PushService;
+  founder: FounderService;
 }
 
 export function createAIProvider(env: Env): AIProvider {
@@ -112,5 +114,5 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const voice: VoiceProvider = env.VOICE_PROVIDER === 'elevenlabs' && env.ELEVENLABS_API_KEY ? new ElevenLabsVoiceProvider(env.ELEVENLABS_API_KEY, env.ELEVENLABS_DEFAULT_VOICE_ID) : new NoVoiceProvider();
   const office = new OfficeService(db, ai, new NexusCalendarProvider(), meetingProvider, voice, mail, work, notifications, audit, entitlements);
   officeTools = { presentations, mail, office };
-  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office, meetingRoom: new MeetingRoomService(env, db, ai, entitlements), team: new TeamService(db, ai, entitlements), signatures: new SignatureService(env, db, files, entitlements, notifications, email, audit), push };
+  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office, meetingRoom: new MeetingRoomService(env, db, ai, entitlements), team: new TeamService(db, ai, entitlements), signatures: new SignatureService(env, db, files, entitlements, notifications, email, audit), push, founder: new FounderService(db, log) };
 }

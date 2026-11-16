@@ -27,7 +27,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 export function RequireOrg({ children }: { children: ReactNode }) {
   const { me, meLoading, orgId, org, orgLoading } = useSession();
   if (meLoading || (orgId && orgLoading)) return <FullPageLoader />;
-  if (me && me.organizations.length === 0) return <Navigate to="/onboarding" replace />;
+  // The founder account belongs to no company: send it to the Founder Portal instead of company registration.
+  if (me && me.organizations.length === 0) return <Navigate to={me.is_founder ? '/founder' : '/onboarding'} replace />;
   if (!org) return <FullPageLoader />;
   return <>{children}</>;
 }

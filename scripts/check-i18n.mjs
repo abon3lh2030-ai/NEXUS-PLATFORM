@@ -49,7 +49,11 @@ async function load(name) {
   return mod[name];
 }
 
-const [ar, en] = await Promise.all([load('ar'), load('en')]);
+const [ar0, en0] = await Promise.all([load('ar'), load('en')]);
+// The Founder Portal registers its own bundle (features/founder/strings.ts) under `founder` (+ extra `errors`).
+const founder = await import(pathToFileURL(join(src, 'features/founder/strings.ts')).href);
+const ar = { ...ar0, founder: founder.founderAr, errors: { ...ar0.errors, ...founder.founderAr.errors } };
+const en = { ...en0, founder: founder.founderEn, errors: { ...en0.errors, ...founder.founderEn.errors } };
 const far = flatten(ar);
 const fen = flatten(en);
 const has = (map, key) => map.has(key) || [...map.keys()].some((k) => k.startsWith(`${key}.`));

@@ -10,7 +10,7 @@ import { PDFDocument, rgb, type PDFFont, type PDFImage, type PDFPage } from 'pdf
 
 const FONT_DIR = new URL('../../../assets/fonts/', import.meta.url);
 let fonts: { regular: Uint8Array; bold: Uint8Array } | null = null;
-function fontBytes() {
+export function fontBytes() {
   fonts ??= {
     regular: readFileSync(new URL('IBMPlexSansArabic-Regular.ttf', FONT_DIR)),
     bold: readFileSync(new URL('IBMPlexSansArabic-Bold.ttf', FONT_DIR)),

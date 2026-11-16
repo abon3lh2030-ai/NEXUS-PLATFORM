@@ -6,6 +6,8 @@ export interface AuthUser {
   email: string | null;
   token: string;
   isSuperAdmin: boolean;
+  /** Has a Founder Portal account (the portal itself also requires MFA, checked by the founder guard). */
+  isFounder?: boolean;
 }
 
 /** A human acting inside an organization. Resolved server-side on every request. */

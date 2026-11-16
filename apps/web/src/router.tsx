@@ -72,6 +72,24 @@ const AdminEnterpriseDetail = m(() => import('./pages/admin/admin'), 'AdminEnter
 const AdminOrganizations = m(() => import('./pages/admin/admin'), 'AdminOrganizations');
 const AdminPayments = m(() => import('./pages/admin/admin'), 'AdminPayments');
 
+const F = (name: string) => lazy(async () => {
+  const mods: Record<string, () => Promise<Record<string, unknown>>> = {
+    overview: () => import('./features/founder/pages/overview'), technology: () => import('./features/founder/pages/technology'),
+    business: () => import('./features/founder/pages/business'), more: () => import('./features/founder/pages/more'),
+  };
+  const [file, exp] = name.split('.') as [string, string];
+  return { default: (await mods[file]!())[exp] as React.ComponentType };
+});
+const FounderLayout = m(() => import('./features/founder/layout'), 'FounderLayout');
+const FounderLogin = m(() => import('./features/founder/gate'), 'FounderLoginPage');
+const FounderPages = {
+  overview: F('overview.OverviewPage'), technology: F('technology.TechnologyPage'), plan: F('technology.TechPlanPage'), progress: F('technology.ProgressPage'), simulator: F('technology.SimulatorPage'),
+  finance: F('business.FinancePage'), sales: F('business.SalesPage'), development: F('business.DevelopmentPage'), strategy: F('business.StrategyPage'), growth: F('business.GrowthPage'),
+  marketing: F('more.MarketingPage'), investors: F('more.InvestorsPage'), team: F('more.TeamPage'), risks: F('more.RisksPage'), documents: F('more.DocumentsPage'), reports: F('more.ReportsPage'), audit: F('more.AuditPage'), settings: F('more.SettingsPage'),
+  simple: F('more.SimpleCollectionPage'),
+};
+const Simple = FounderPages.simple as unknown as React.ComponentType<{ col: string; page: string; icon: string }>;
+
 const s = (el: ReactNode) => <Suspense fallback={<LoadingBlock />}>{el}</Suspense>;
 /** Paid feature pages: server enforces the same (HTTP 402); this shows a clear paywall. */
 const p = (el: ReactNode) => s(<RequirePaid>{el}</RequirePaid>);
@@ -162,6 +180,35 @@ export const router = createBrowserRouter([
       { path: 'enterprise/:id', element: s(<AdminEnterpriseDetail />) },
       { path: 'organizations', element: s(<AdminOrganizations />) },
       { path: 'payments', element: s(<AdminPayments />) },
+    ],
+  },
+  { path: '/founder/login', element: s(<FounderLogin />) },
+  {
+    path: '/founder',
+    element: <Suspense fallback={<FullPageLoader />}><FounderLayout /></Suspense>,
+    children: [
+      { index: true, element: s(<FounderPages.overview />) },
+      { path: 'strategy', element: s(<FounderPages.strategy />) },
+      { path: 'growth', element: s(<FounderPages.growth />) },
+      { path: 'decisions', element: s(<Simple col="decisions" page="decisions" icon="decisions" />) },
+      { path: 'reports', element: s(<FounderPages.reports />) },
+      { path: 'sales', element: s(<FounderPages.sales />) },
+      { path: 'finance', element: s(<FounderPages.finance />) },
+      { path: 'marketing', element: s(<FounderPages.marketing />) },
+      { path: 'investors', element: s(<FounderPages.investors />) },
+      { path: 'team', element: s(<FounderPages.team />) },
+      { path: 'technology', element: s(<FounderPages.technology />) },
+      { path: 'technology/plan', element: s(<FounderPages.plan />) },
+      { path: 'technology/progress', element: s(<FounderPages.progress />) },
+      { path: 'technology/simulator', element: s(<FounderPages.simulator />) },
+      { path: 'development', element: s(<FounderPages.development />) },
+      { path: 'legal', element: s(<Simple col="legal" page="legal" icon="legal" />) },
+      { path: 'competitors', element: s(<Simple col="competitors" page="competitors" icon="competitors" />) },
+      { path: 'risks', element: s(<FounderPages.risks />) },
+      { path: 'documents', element: s(<FounderPages.documents />) },
+      { path: 'audit', element: s(<FounderPages.audit />) },
+      { path: 'settings', element: s(<FounderPages.settings />) },
+      { path: '*', element: <Navigate to="/founder" replace /> },
     ],
   },
   { path: '/app/*', element: <Navigate to="/app" replace /> },
