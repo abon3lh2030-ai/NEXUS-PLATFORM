@@ -20,3 +20,24 @@
   .prose-nexus a { @apply text-primary underline; }
   .prose-nexus blockquote { @apply border-s-4 ps-3 text-muted-foreground; }
 }
+
+/* Moyasar payment form: its inputs and labels are designed for a light background. In dark mode
+   the typed text became the same colour as the background, so the form always sits on a light panel. */
+.mysr-form {
+  color-scheme: light;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+.mysr-form div#mysr input,
+.mysr-form div#mysr select {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827;
+  background-color: #ffffff !important;
+  caret-color: #111827;
+}
+.mysr-form div#mysr input::placeholder {
+  color: #9ca3af;
+  -webkit-text-fill-color: #9ca3af;
+}
