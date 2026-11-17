@@ -114,7 +114,7 @@ export const en: typeof ar = {
     invalidCredentials: 'Incorrect email or password', emailNotConfirmed: 'Confirm your email first using the link we sent you',
     checkEmailTitle: 'Check your email', checkEmailBody: 'We sent a confirmation link to your email. Open it to activate your account, then register your organization.',
     agree: 'By creating an account you agree to the', forgotTitle: 'Reset password', forgotSubtitle: "We'll email you a reset link",
-    sendReset: 'Send link', resetSent: 'If the email is registered, you will receive a reset link.', newPasswordTitle: 'Set a new password', linkInvalid: 'Invalid or expired link',
+    sendReset: 'Send link', resetSent: 'If the email is registered, you will receive a reset link.', newPasswordTitle: 'Set a new password', linkInvalid: 'Invalid or expired link', emailConfirmedTitle: 'Your email is confirmed ✓', emailConfirmedBody: 'Sign in to finish registering your company.',
   },
   invite: { title: 'Invitation', subtitle: "You've been invited to join an organization on NEXUS", accept: 'Accept invitation' },
   onboarding: {

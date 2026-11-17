@@ -165,16 +165,29 @@ export function AuthCallbackPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<'invalid' | 'confirmed' | null>(null);
+  const next = params.get('next')?.startsWith('/') ? params.get('next')! : '/app';
   useEffect(() => {
     const code = params.get('code');
-    const next = params.get('next')?.startsWith('/') ? params.get('next')! : '/app';
     if (!code) {
       navigate(next, { replace: true });
       return;
     }
-    void supabase.auth.exchangeCodeForSession(code).then(({ error }) => (error ? setFailed(true) : navigate(next, { replace: true })));
-  }, [params, navigate]);
+    void supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+      if (!error) return navigate(next, { replace: true });
+      // Opened in another browser than the one used to sign up: Supabase has ALREADY confirmed the
+      // email before redirecting here; only the automatic sign-in is impossible. Say so plainly.
+      const verifierMissing = error.name === 'AuthPKCECodeVerifierMissingError' || /code verifier/i.test(error.message);
+      setFailed(verifierMissing && next === '/onboarding' ? 'confirmed' : 'invalid');
+    });
+  }, [params, navigate, next]);
+  if (failed === 'confirmed') {
+    return (
+      <AuthShell title={t('auth.emailConfirmedTitle')} subtitle={t('auth.emailConfirmedBody')}>
+        <Button asChild className="w-full"><Link to={`/login?next=${encodeURIComponent(next)}`}>{t('auth.signIn')}</Link></Button>
+      </AuthShell>
+    );
+  }
   return failed ? <AuthShell title={t('auth.linkInvalid')}><Button asChild className="w-full"><Link to="/login">{t('auth.signIn')}</Link></Button></AuthShell> : <FullPageLoader />;
 }
 

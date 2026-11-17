@@ -112,7 +112,7 @@ export const ar = {
     invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة', emailNotConfirmed: 'أكّد بريدك الإلكتروني أولًا عبر الرابط المرسل إليك',
     checkEmailTitle: 'تحقق من بريدك الإلكتروني', checkEmailBody: 'أرسلنا رابط تأكيد إلى بريدك. افتحه لتفعيل حسابك ثم أكمل تسجيل منشأتك.',
     agree: 'بإنشاء حساب فإنك توافق على', forgotTitle: 'استعادة كلمة المرور', forgotSubtitle: 'سنرسل لك رابطًا لإعادة التعيين',
-    sendReset: 'إرسال الرابط', resetSent: 'إذا كان البريد مسجلًا، ستصلك رسالة تحتوي رابط إعادة التعيين.', newPasswordTitle: 'تعيين كلمة مرور جديدة', linkInvalid: 'الرابط غير صالح أو منتهي',
+    sendReset: 'إرسال الرابط', resetSent: 'إذا كان البريد مسجلًا، ستصلك رسالة تحتوي رابط إعادة التعيين.', newPasswordTitle: 'تعيين كلمة مرور جديدة', linkInvalid: 'الرابط غير صالح أو منتهي', emailConfirmedTitle: 'تم تأكيد بريدك ✓', emailConfirmedBody: 'سجّل دخولك لإكمال تسجيل منشأتك.',
   },
   invite: { title: 'دعوة للانضمام', subtitle: 'تمت دعوتك للانضمام إلى منشأة على NEXUS', accept: 'قبول الدعوة' },
   onboarding: {
