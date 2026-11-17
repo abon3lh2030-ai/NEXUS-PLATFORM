@@ -28,8 +28,10 @@ export const commercialRegistrationSchema = z
   .transform(normalizeCommercialRegistration)
   .refine(isValidSaudiCommercialRegistration, { message: 'invalid_saudi_cr' });
 
+// Also accepts null: the web form validates with this same schema first and sends its OUTPUT (''→null).
 const optionalUrl = z
   .union([z.literal(''), z.url({ protocol: /^https?$/ })])
+  .nullable()
   .optional()
   .transform((v) => (v ? v : null));
 

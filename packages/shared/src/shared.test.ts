@@ -130,3 +130,11 @@ describe('annual subscription', () => {
     expect(isSubscriptionActive({ status: 'expired', ends_at: '2099-01-01T00:00:00Z' }, now)).toBe(false);
   });
 });
+
+import { companyApplicationSchema as companySchemaRoundTrip } from './schemas.js';
+describe('company application round trip', () => {
+  it('accepts its own parsed output (the form sends parsed values to the API)', () => {
+    const once = companySchemaRoundTrip.parse({ company_name: 'تجربة', commercial_registration: '1010123456', company_email: 'info@try.co', company_phone: '0545810146', website: '', applicant_role: 'المالك', industry: 'technology', company_size: '11-50', note: '', confirm_saudi_registered: true });
+    expect(companySchemaRoundTrip.safeParse(once).success).toBe(true);
+  });
+});
