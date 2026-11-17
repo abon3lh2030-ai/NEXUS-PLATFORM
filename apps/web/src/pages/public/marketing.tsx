@@ -131,8 +131,9 @@ export function PlanCards({ plans, onSelect, currentPlan, busyPlan, actionLabel 
           <div key={p.code} className={cn('relative flex flex-col rounded-2xl border bg-card p-6 shadow-xs', p.is_popular && 'border-primary shadow-lg shadow-primary/10 ring-1 ring-primary')}>
             {p.is_popular && <Badge tone="primary" className="absolute -top-3 start-6 bg-primary text-primary-foreground"><Crown /> {t('pricing.popular')}</Badge>}
             <p className="font-semibold">{t(`plans.${p.code}`, p.name_en)}</p>
-            <div className="mt-4 flex items-baseline gap-1">
-              {p.is_custom ? <span className="text-3xl font-semibold">{t('pricing.custom')}</span> : <><span className="text-4xl font-semibold tabular-nums tracking-tight">{formatSar(p.price_halalas)}</span><span className="text-sm text-muted-foreground">/{t('pricing.year')}</span></>}
+            {/* Wraps instead of overflowing: in narrow cards the "/ yearly" unit moves under the price. */}
+            <div className="mt-4 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+              {p.is_custom ? <span className="text-3xl font-semibold">{t('pricing.custom')}</span> : <><span className="whitespace-nowrap text-3xl font-semibold tabular-nums tracking-tight 2xl:text-4xl">{formatSar(p.price_halalas)}</span><span className="whitespace-nowrap text-sm text-muted-foreground">/ {t('pricing.year')}</span></>}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">{t('pricing.annualOnly')}</p>
             <ul className="mt-6 grid gap-2 text-sm">
