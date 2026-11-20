@@ -1,4 +1,4 @@
-import { aiMeetingDisplayName, classifyRecipients, findFreeSlots, isValidEmail } from '@nexus/shared';
+import { classifyRecipients, findFreeSlots, isValidEmail } from '@nexus/shared';
 import { z } from 'zod';
 import type { AiActor, OrgActor } from '../../context.js';
 import { AppError, badRequest, conflict, forbidden, notFound, unwrap } from '../../lib/errors.js';
@@ -10,6 +10,37 @@ import type { NotificationService } from '../notifications.js';
 import type { WorkService } from '../work-service.js';
 import type { MailService } from './mail-service.js';
 import { ProviderNotConnectedError, type CalendarProvider, type MeetingProvider, type VoiceProvider } from './providers.js';
+
+/** Normalizes Arabic/Latin names for matching (diacritics, alef/ya/ta-marbuta variants, case). */
+export function normalizeName(v: string): string {
+  return v
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\u064B-\u0652\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Finds the member an action item's owner hint refers to: a full-name match, or a first-name match
+ * that only one attendee has. Ambiguous or unknown → null (never guesses).
+ */
+export function matchOwner(hint: string | null | undefined, people: Array<{ memberId: string; name: string }>): string | null {
+  if (!hint) return null;
+  const h = ` ${normalizeName(hint)} `;
+  const full = people.filter((p) => normalizeName(p.name) && h.includes(` ${normalizeName(p.name)} `));
+  if (full.length === 1) return full[0]!.memberId;
+  if (full.length > 1) return null;
+  const first = people.filter((p) => {
+    const f = normalizeName(p.name).split(' ')[0];
+    return f && f.length > 1 && h.includes(` ${f} `);
+  });
+  return first.length === 1 ? first[0]!.memberId : null;
+}
 
 interface MeetingRow {
   id: string;
@@ -118,8 +149,7 @@ export class OfficeService {
       if ((data ?? []).length !== new Set(ids).size) throw badRequest(`invalid_reference:${table}`);
     }
     const endsAt = new Date(input.startsAt.getTime() + input.durationMin * 60_000);
-    let link = input.meetingLink ?? null;
-    if (!link && this.meetings.capabilities.createMeeting) link = (await this.meetings.createMeeting({ title: input.title, startsAt: input.startsAt, endsAt })).meetingUrl;
+    const link = input.meetingLink ?? null;
     const { data: policy } = await this.db.from('communication_policies').select('meeting_recording').eq('organization_id', orgId).maybeSingle<{ meeting_recording: string }>();
 
     const meeting = unwrap(
@@ -161,84 +191,38 @@ export class OfficeService {
   }
 
   /**
-   * AI employee joins a live meeting through the meeting provider. Requires: permission,
-   * provider join capability, a meeting link and — if the policy requires it — confirmed consent.
-   * The bot is always named as an AI assistant (identity disclosure).
+   * AI employee joins the meeting's NEXUS room (LiveKit). Requires: permission, being invited, a
+   * connected meeting provider and — if the policy requires it — confirmed consent. The agent always
+   * announces in the room chat that it is an AI and that the meeting is transcribed/recorded.
    */
-  async joinMeeting(ai: AiActor, meetingId: string, language: 'ar' | 'en') {
+  async joinMeeting(ai: AiActor, meetingId: string, _language: 'ar' | 'en') {
     if (!ai.permissions.has('meetings.join')) throw forbidden('ai_permission_denied');
     const meeting = await this.loadMeeting(ai.orgId, meetingId);
     const { data: participant } = await this.db.from('meeting_participants').select('id').eq('meeting_id', meetingId).eq('ai_employee_id', ai.aiEmployeeId).maybeSingle();
     if (!participant) throw forbidden('ai_not_invited_to_meeting');
-    const record = async (status: string, extra: Record<string, unknown> = {}) =>
-      unwrap(await this.db.from('meeting_sessions').insert({ organization_id: ai.orgId, meeting_id: meetingId, ai_employee_id: ai.aiEmployeeId, provider: this.meetings.name, status, capabilities: this.meetings.capabilities, ...extra }).select('*').single<{ id: string; status: string }>());
-
     if (!this.meetings.capabilities.join) {
-      const s = await record('not_supported', { failure_reason: 'meeting_provider_not_connected' });
+      const s = unwrap(await this.db.from('meeting_sessions').insert({ organization_id: ai.orgId, meeting_id: meetingId, ai_employee_id: ai.aiEmployeeId, provider: this.meetings.name, status: 'not_supported', capabilities: this.meetings.capabilities, failure_reason: 'meeting_provider_not_connected' }).select('*').single<{ id: string; status: string }>());
       return { session: s, joined: false, reason: 'meeting_provider_not_connected' };
     }
-    if (!meeting.meeting_link) throw badRequest('meeting_link_required');
     const { data: policy } = await this.db.from('communication_policies').select('require_participant_consent').eq('organization_id', ai.orgId).maybeSingle<{ require_participant_consent: boolean }>();
     if ((policy?.require_participant_consent ?? true) && !meeting.consent_confirmed) throw conflict('participant_consent_required');
-    // The bot's time in the call is paid per minute: reserve the meeting's length up front, and the
-    // deadline sweep (enforceBotDeadlines) makes it leave when that time is over.
-    const billing = await this.entitlements.getBillingState(ai.orgId);
-    const minutes = Math.max(15, Math.min(480, meeting.duration_minutes));
-    await this.entitlements.consume(ai.orgId, billing, 'meeting_bot_minutes_per_year', minutes);
-    let bot;
-    try {
-      bot = await this.meetings.joinMeeting({ meetingUrl: meeting.meeting_link, botName: aiMeetingDisplayName(ai.name, language) });
-    } catch (err) {
-      await this.entitlements.release(ai.orgId, billing, 'meeting_bot_minutes_per_year', minutes).catch(() => undefined);
-      throw err;
+    const res = await this.meetings.dispatchAgent(ai.orgId, meetingId);
+    const { data: s } = await this.db.from('meeting_sessions').select('id, status').eq('meeting_id', meetingId).eq('ai_employee_id', ai.aiEmployeeId).order('created_at', { ascending: false }).limit(1).maybeSingle<{ id: string; status: string }>();
+    if (res.joined) {
+      await this.audit.audit({ organizationId: ai.orgId, actorType: 'ai', actorAiEmployeeId: ai.aiEmployeeId, action: 'meeting.joined', targetType: 'meeting', targetId: meetingId, metadata: { provider: this.meetings.name } });
+      await this.notifications.notifyRoles(ai.orgId, ['owner', 'admin', 'manager'], { type: 'ai_joined_meeting', title: meeting.title, body: ai.name, link: `/app/meetings/${meetingId}` });
     }
-    const s = await record(bot.status, { provider_bot_id: bot.providerBotId, joined_at: new Date().toISOString(), bot_deadline: new Date(Date.now() + minutes * 60_000).toISOString() });
-    await this.db.from('ai_employees').update({ status: 'in_meeting' }).eq('id', ai.aiEmployeeId);
-    await this.audit.audit({ organizationId: ai.orgId, actorType: 'ai', actorAiEmployeeId: ai.aiEmployeeId, action: 'meeting.joined', targetType: 'meeting', targetId: meetingId, metadata: { provider: this.meetings.name } });
-    await this.notifications.notifyRoles(ai.orgId, ['owner', 'admin', 'manager'], { type: 'ai_joined_meeting', title: meeting.title, body: ai.name, link: `/app/meetings/${meetingId}` });
-    return { session: s, joined: true };
+    return { session: s ?? { id: '', status: res.joined ? 'joining' : 'failed' }, joined: res.joined, ...(res.reason ? { reason: res.reason } : {}) };
   }
 
   async leaveMeeting(actor: OrgActor, sessionId: string) {
     if (!actor.permissions.has('ai.control')) throw forbidden();
-    const { data: s } = await this.db.from('meeting_sessions').select('*').eq('id', sessionId).eq('organization_id', actor.orgId).maybeSingle<{ id: string; provider_bot_id: string | null; ai_employee_id: string; meeting_id: string }>();
+    const { data: s } = await this.db.from('meeting_sessions').select('*').eq('id', sessionId).eq('organization_id', actor.orgId).maybeSingle<{ id: string; provider: string; ai_employee_id: string; meeting_id: string }>();
     if (!s) throw notFound();
-    if (s.provider_bot_id) await this.meetings.leaveMeeting(s.provider_bot_id);
+    if (s.provider === this.meetings.name && this.meetings.capabilities.join) await this.meetings.removeAgent(actor.orgId, s.meeting_id).catch(() => undefined);
     await this.db.from('meeting_sessions').update({ status: 'left', left_at: new Date().toISOString() }).eq('id', s.id);
     await this.db.from('ai_employees').update({ status: 'idle' }).eq('id', s.ai_employee_id);
     await this.audit.audit({ organizationId: actor.orgId, actorType: 'human', actorUserId: actor.userId, action: 'meeting.left', targetType: 'meeting', targetId: s.meeting_id });
-  }
-
-  /** Cron: meeting bots whose reserved minutes are over are made to leave (they are billed while in the call). */
-  async enforceBotDeadlines(): Promise<number> {
-    const { data } = await this.db
-      .from('meeting_sessions')
-      .select('id, provider_bot_id, ai_employee_id')
-      .not('provider_bot_id', 'is', null)
-      .in('status', ['joining', 'in_meeting', 'presenting'])
-      .lt('bot_deadline', new Date().toISOString())
-      .limit(100);
-    const rows = (data ?? []) as Array<{ id: string; provider_bot_id: string; ai_employee_id: string }>;
-    for (const r of rows) {
-      await this.meetings.leaveMeeting(r.provider_bot_id).catch(() => undefined);
-      await this.db.from('meeting_sessions').update({ status: 'left', left_at: new Date().toISOString(), failure_reason: 'time_limit_reached' }).eq('id', r.id);
-      await this.db.from('ai_employees').update({ status: 'idle' }).eq('id', r.ai_employee_id);
-    }
-    return rows.length;
-  }
-
-  /** Pulls the provider transcript into meeting_transcripts (respecting the retention policy). */
-  async syncTranscript(orgId: string, sessionId: string) {
-    const { data: s } = await this.db.from('meeting_sessions').select('*').eq('id', sessionId).eq('organization_id', orgId).maybeSingle<{ id: string; provider_bot_id: string | null; meeting_id: string }>();
-    if (!s?.provider_bot_id) throw notFound();
-    if (!this.meetings.capabilities.transcript) throw new ProviderNotConnectedError('meeting', 'transcript');
-    const meeting = await this.loadMeeting(orgId, s.meeting_id);
-    if (meeting.recording_policy === 'none') throw forbidden('transcripts_disabled_by_policy');
-    const rows = await this.meetings.getTranscript(s.provider_bot_id);
-    const { data: policy } = await this.db.from('communication_policies').select('transcript_retention_days').eq('organization_id', orgId).maybeSingle<{ transcript_retention_days: number }>();
-    const expires = new Date(Date.now() + (policy?.transcript_retention_days ?? 90) * 86400_000).toISOString();
-    if (rows.length) await this.db.from('meeting_transcripts').insert(rows.map((r) => ({ organization_id: orgId, meeting_id: s.meeting_id, session_id: s.id, speaker: r.speaker, text: r.text, start_ms: r.startMs, source: 'provider', expires_at: expires })));
-    return { lines: rows.length };
   }
 
   /** Human-provided transcript or notes (always available, even without a meeting provider). */
@@ -255,13 +239,14 @@ export class OfficeService {
    * After the meeting: summary, minutes, decisions, action items (+ optional tasks) and a
    * follow-up email DRAFT to internal attendees (sending follows the email policy/approval).
    */
-  async processMeeting(orgId: string, meetingId: string, by: { aiEmployeeId?: string; userId?: string; ai?: AiActor }, opts: { createTasks: boolean; language: 'ar' | 'en' }, actor?: OrgActor) {
+  async processMeeting(orgId: string, meetingId: string, by: { aiEmployeeId?: string; userId?: string; ai?: AiActor }, opts: { createTasks: boolean; language: 'ar' | 'en'; model?: string }, actor?: OrgActor) {
     const meeting = await this.loadMeeting(orgId, meetingId);
     const { data: transcript } = await this.db.from('meeting_transcripts').select('speaker, text').eq('meeting_id', meetingId).order('id').limit(2000);
     const lines = ((transcript ?? []) as Array<{ speaker: string | null; text: string }>).map((l) => (l.speaker ? `${l.speaker}: ${l.text}` : l.text)).join('\n');
     const material = [meeting.agenda && `Agenda:\n${meeting.agenda}`, meeting.notes && `Notes:\n${meeting.notes}`, lines && `Transcript:\n${lines}`].filter(Boolean).join('\n\n');
     if (!material.trim()) throw badRequest('meeting_has_no_notes');
-    const { model } = await this.entitlements.aiGate(orgId);
+    const gate = await this.entitlements.aiGate(orgId);
+    const model = opts.model ?? gate.model;
     if (by.aiEmployeeId) await this.db.from('ai_employees').update({ status: 'processing_meeting' }).eq('id', by.aiEmployeeId);
     const { data, usage } = await this.ai.generateStructured({
       model,
@@ -275,14 +260,17 @@ export class OfficeService {
     await this.db.from('meetings').update({ summary: data.summary, minutes: data.minutes, decisions_extracted: data.decisions, action_items: data.action_items, status: 'completed' }).eq('id', meetingId);
     const items = data.action_items.slice(0, 30);
     const createdTasks: string[] = [];
+    const people = await this.meetingPeople(orgId, meetingId);
     for (const item of items) {
       let taskId: string | null = null;
+      // Link the task to the NEXUS member the action item names (only when the match is unambiguous).
+      const assignee = matchOwner(item.owner_hint, people);
       if (opts.createTasks && actor) {
-        const t = (await this.work.create(actor, 'tasks', { title: item.title.slice(0, 300), description: `From meeting: ${meeting.title}`, project_id: meeting.project_id, priority: 'medium', status: 'todo' })) as { id: string };
+        const t = (await this.work.create(actor, 'tasks', { title: item.title.slice(0, 300), description: `From meeting: ${meeting.title}`, project_id: meeting.project_id, priority: 'medium', status: 'todo', ...(assignee ? { assignee_member_id: assignee } : {}) })) as { id: string };
         taskId = t.id;
         createdTasks.push(t.id);
       } else if (opts.createTasks && by.aiEmployeeId) {
-        const { data: t } = await this.db.from('tasks').insert({ organization_id: orgId, title: item.title.slice(0, 300), description: `From meeting: ${meeting.title}`, project_id: meeting.project_id, creator_ai_employee_id: by.aiEmployeeId, status: 'todo' }).select('id').single<{ id: string }>();
+        const { data: t } = await this.db.from('tasks').insert({ organization_id: orgId, title: item.title.slice(0, 300), description: `From meeting: ${meeting.title}`, project_id: meeting.project_id, creator_ai_employee_id: by.aiEmployeeId, assignee_member_id: assignee, status: 'todo' }).select('id').single<{ id: string }>();
         taskId = t?.id ?? null;
         if (taskId) createdTasks.push(taskId);
       }
@@ -311,6 +299,23 @@ export class OfficeService {
     if (createdTasks.length) await this.audit.audit({ organizationId: orgId, actorType: by.aiEmployeeId ? 'ai' : 'human', actorAiEmployeeId: by.aiEmployeeId ?? null, actorUserId: by.userId ?? null, action: 'meeting.tasks_created', targetType: 'meeting', targetId: meetingId, metadata: { count: createdTasks.length } });
     await this.notifications.notifyRoles(orgId, ['owner', 'admin', 'manager'], { type: 'meeting_summary_ready', title: meeting.title, link: `/app/meetings/${meetingId}` });
     return { summary_id: summary.id, decisions: data.decisions.length, action_items: items.length, tasks_created: createdTasks.length, followup_email_id: followupId };
+  }
+
+  /** Meeting attendees (and everyone who spoke) with their NEXUS member ids, for linking action items. */
+  private async meetingPeople(orgId: string, meetingId: string): Promise<Array<{ memberId: string; name: string }>> {
+    const [{ data: parts }, { data: speakers }] = await Promise.all([
+      this.db.from('meeting_participants').select('member_id').eq('meeting_id', meetingId).not('member_id', 'is', null),
+      this.db.from('meeting_transcripts').select('speaker_member_id').eq('meeting_id', meetingId).not('speaker_member_id', 'is', null).limit(2000),
+    ]);
+    const ids = [...new Set([...((parts ?? []) as Array<{ member_id: string }>).map((p) => p.member_id), ...((speakers ?? []) as Array<{ speaker_member_id: string }>).map((p) => p.speaker_member_id)])];
+    if (!ids.length) return [];
+    const { data: members } = await this.db.from('organization_members').select('id, user_id').in('id', ids).eq('organization_id', orgId);
+    const userIds = ((members ?? []) as Array<{ user_id: string }>).map((m) => m.user_id);
+    const { data: profiles } = userIds.length ? await this.db.from('profiles').select('id, full_name').in('id', userIds) : { data: [] };
+    return ((members ?? []) as Array<{ id: string; user_id: string }>).flatMap((m) => {
+      const name = ((profiles ?? []) as Array<{ id: string; full_name: string | null }>).find((p) => p.id === m.user_id)?.full_name?.trim();
+      return name ? [{ memberId: m.id, name }] : [];
+    });
   }
 
   async meetingDetail(orgId: string, meetingId: string, canSeeTranscript: boolean) {

@@ -33,11 +33,11 @@ describe('digital office tool guard', () => {
 });
 
 describe('providers report capabilities honestly', () => {
-  it('NEXUS meetings cannot join/listen/speak and say so', async () => {
+  it('without LiveKit, meetings cannot join/listen/speak and say so', async () => {
     const p = new NexusMeetingProvider();
     expect(p.capabilities).toMatchObject({ join: false, listen: false, speak: false, createMeeting: true });
-    await expect(p.joinMeeting()).rejects.toMatchObject({ code: 'meeting_provider_not_connected' });
-    await expect(p.sendAudio()).rejects.toMatchObject({ code: 'meeting_provider_not_connected' });
+    await expect(p.dispatchAgent()).rejects.toMatchObject({ code: 'meeting_provider_not_connected' });
+    await expect(p.removeAgent()).rejects.toMatchObject({ code: 'meeting_provider_not_connected' });
   });
   it('no voice provider → TTS is refused', async () => {
     await expect(new NoVoiceProvider().textToSpeech()).rejects.toMatchObject({ code: 'voice_provider_not_connected' });

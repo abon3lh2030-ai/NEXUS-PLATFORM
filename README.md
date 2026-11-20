@@ -52,7 +52,7 @@ AI employees also have Mail, Calendar, Meetings, Presentations and Voice. Each c
   - Email drafting and the send policy engine.
 - **Code in place, but needs provider credentials/verification:**
   - Email delivery through Resend with a verified agent domain.
-  - Live meeting attendance through Recall.ai.
+  - Live meetings on LiveKit; the AI employee joins as a participant (LiveKit Agents worker in `agents/meeting-agent`).
   - Voice through ElevenLabs.
 - **Architecture only:**
   - External calendar sync (Google / Microsoft OAuth).

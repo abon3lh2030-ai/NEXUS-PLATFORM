@@ -24,8 +24,22 @@ services:
         value: storage_workspace
       - key: CALENDAR_PROVIDER
         value: nexus
-      - key: MEETING_PROVIDER
-        value: nexus
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: MEETING_AGENT_TOKEN
+        sync: false
+      - key: MEETING_AI_MODEL
+        value: claude-sonnet-5-5
+      - key: RECORDING_S3_ENDPOINT
+        sync: false
+      - key: RECORDING_S3_ACCESS_KEY_ID
+        sync: false
+      - key: RECORDING_S3_SECRET_ACCESS_KEY
+        sync: false
       - key: VOICE_PROVIDER
         value: none
       - key: PLATFORM_ADMIN_NOTIFICATION_EMAIL

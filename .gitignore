@@ -42,3 +42,8 @@ supabase/.branches/
 *.m4a
 /*.pptx
 /*.pdf
+
+# Python (meeting agent)
+.venv/
+__pycache__/
+.pytest_cache/

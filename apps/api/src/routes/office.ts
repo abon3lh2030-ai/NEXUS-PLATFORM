@@ -177,7 +177,6 @@ export async function officeRoutes(app: FastifyInstance, s: Services) {
     return { ok: true };
   });
 
-  app.post('/meetings/sessions/:id/sync-transcript', { preHandler: orgGuard(s, { permission: 'meetings.manage' }) }, async (req) => s.office.syncTranscript(actorOf(req).orgId, idOf(req.params)));
 
   /* ------------------------------ Voice ------------------------------ */
 

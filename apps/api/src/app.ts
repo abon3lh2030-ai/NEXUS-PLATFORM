@@ -1,7 +1,6 @@
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
-import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Env } from './config/env.js';
 import { AppError } from './lib/errors.js';
@@ -15,7 +14,7 @@ import { organizationRoutes } from './routes/organization.js';
 import { publicRoutes } from './routes/public.js';
 import { workRoutes } from './routes/work.js';
 import { officeRoutes } from './routes/office.js';
-import { meetingRoomRoutes } from './routes/meeting-room.js';
+import { meetingLiveRoutes } from './routes/meetings-live.js';
 import { teamRoutes } from './routes/team.js';
 import { signatureRoutes } from './routes/signatures.js';
 import { founderRoutes } from './routes/founder.js';
@@ -55,8 +54,6 @@ export async function buildApp(env: Env, overrides: Parameters<typeof createServ
     keyGenerator: (req) => (req.headers.authorization ? `u:${req.headers.authorization.slice(-24)}` : `ip:${req.ip}`),
   });
 
-  await app.register(websocket, { options: { maxPayload: 64 * 1024 } });
-
   if (env.NODE_ENV === 'production') {
     app.addHook('onRequest', async (req, reply) => {
       if (req.headers['x-forwarded-proto'] === 'http') {
@@ -86,7 +83,7 @@ export async function buildApp(env: Env, overrides: Parameters<typeof createServ
   await app.register(async (scope) => governanceRoutes(scope, services));
   await app.register(async (scope) => billingRoutes(scope, services));
   await app.register(async (scope) => officeRoutes(scope, services));
-  await app.register(async (scope) => meetingRoomRoutes(scope, services));
+  await app.register(async (scope) => meetingLiveRoutes(scope, services));
   await app.register(async (scope) => teamRoutes(scope, services));
   await app.register(async (scope) => signatureRoutes(scope, services));
   await app.register(async (scope) => adminRoutes(scope, services));

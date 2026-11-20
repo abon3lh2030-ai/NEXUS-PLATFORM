@@ -12,6 +12,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@livekit/components-react": "^2.9.25",
+    "@livekit/components-styles": "^1.2.0",
+    "@nexus/config": "0.1.0",
     "@nexus/shared": "0.1.0",
     "@nexus/ui": "0.1.0",
     "@supabase/supabase-js": "^2.117.2",
@@ -20,6 +23,7 @@
     "cmdk": "^1.1.1",
     "framer-motion": "^13.4.4",
     "i18next": "^26.4.2",
+    "livekit-client": "^2.24.1",
     "lucide-react": "^1.48.0",
     "moyasar-payment-form": "^2.2.14",
     "react": "^19.3.0",
@@ -31,8 +35,7 @@
     "recharts": "^3.10.1",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.8",
-    "zod": "^4.6.5",
-    "@nexus/config": "0.1.0"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

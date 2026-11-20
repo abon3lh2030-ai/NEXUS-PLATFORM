@@ -24,17 +24,17 @@ import { MeetingAiService } from './meeting-ai.js';
 import type { OfficeTools } from './agent/tools.js';
 import { MailService } from './communications/mail-service.js';
 import { OfficeService } from './communications/office-service.js';
-import { MeetingRoomService } from './communications/meeting-room-service.js';
 import { TeamService } from './team-service.js';
 import { SignatureService } from './signatures/signature-service.js';
 import { PushService } from './push/push-service.js';
 import { FounderService } from './founder/founder-service.js';
+import { LiveKitService } from './meetings/livekit-service.js';
 import {
   ElevenLabsVoiceProvider,
   NexusCalendarProvider,
+  LiveKitMeetingProvider,
   NexusMeetingProvider,
   NoVoiceProvider,
-  RecallMeetingProvider,
   type MeetingProvider,
   type VoiceProvider,
 } from './communications/providers.js';
@@ -63,7 +63,7 @@ export interface Services {
   presentations: PresentationService;
   mail: MailService;
   office: OfficeService;
-  meetingRoom: MeetingRoomService;
+  livekit: LiveKitService;
   team: TeamService;
   signatures: SignatureService;
   push: PushService;
@@ -110,9 +110,16 @@ export function createServices(env: Env, log: FastifyBaseLogger, overrides: Part
   const platform = new PlatformService(env, db, email, audit, notifications, entitlements);
   const presentations = new PresentationService(db, ai, files, notifications, audit, entitlements);
   const mail = new MailService(env, db, email, notifications, audit, entitlements);
-  const meetingProvider: MeetingProvider = env.MEETING_PROVIDER === 'recall' && env.RECALL_API_KEY ? new RecallMeetingProvider(env.RECALL_API_KEY, env.RECALL_REGION) : new NexusMeetingProvider();
+  const livekit = new LiveKitService(env, db, ai, entitlements, audit, log);
+  const meetingProvider: MeetingProvider = livekit.configured ? new LiveKitMeetingProvider(livekit) : new NexusMeetingProvider();
   const voice: VoiceProvider = env.VOICE_PROVIDER === 'elevenlabs' && env.ELEVENLABS_API_KEY ? new ElevenLabsVoiceProvider(env.ELEVENLABS_API_KEY, env.ELEVENLABS_DEFAULT_VOICE_ID) : new NoVoiceProvider();
   const office = new OfficeService(db, ai, new NexusCalendarProvider(), meetingProvider, voice, mail, work, notifications, audit, entitlements);
+  // Queued post-meeting summaries: tasks are created only if the attending AI employee may create them.
+  livekit.processMeeting = async (orgId, meetingId, aiEmployeeId, model) => {
+    const { data: perms } = aiEmployeeId ? await db.from('ai_employee_permissions').select('permissions').eq('ai_employee_id', aiEmployeeId).eq('organization_id', orgId).maybeSingle<{ permissions: string[] }>() : { data: null };
+    const { data: voice } = aiEmployeeId ? await db.from('voice_profiles').select('language').eq('ai_employee_id', aiEmployeeId).maybeSingle<{ language: 'ar' | 'en' }>() : { data: null };
+    return office.processMeeting(orgId, meetingId, aiEmployeeId ? { aiEmployeeId } : {}, { createTasks: (perms?.permissions ?? []).includes('meetings.create_tasks'), language: voice?.language ?? 'ar', model });
+  };
   officeTools = { presentations, mail, office };
-  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office, meetingRoom: new MeetingRoomService(env, db, ai, entitlements), team: new TeamService(db, ai, entitlements), signatures: new SignatureService(env, db, files, entitlements, notifications, email, audit), push, founder: new FounderService(db, log) };
+  return { env, db, log, ai, audit, notifications, email, entitlements, files, computer, agents, billing, work, orgs, nexusAi, insights, platform, meetingAi: new MeetingAiService(db, ai, work, entitlements), presentations, mail, office, livekit, team: new TeamService(db, ai, entitlements), signatures: new SignatureService(env, db, files, entitlements, notifications, email, audit), push, founder: new FounderService(db, log) };
 }

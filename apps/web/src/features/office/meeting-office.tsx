@@ -1,6 +1,6 @@
 import { Badge, Button, Checkbox, NativeSelect, Section, Textarea } from '@nexus/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Bot, FileText, Link2, LogOut, Mic, Presentation, RefreshCw, ShieldCheck, Sparkles, Users, Video } from 'lucide-react';
+import { Bot, FileText, Link2, LogOut, Mic, Presentation, ShieldCheck, Sparkles, Users, Video } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
@@ -44,7 +44,6 @@ export function MeetingOfficePanel({ meetingId }: { meetingId: string }) {
   const addTranscript = useAction(() => apiPost(`/meetings/${meetingId}/transcript`, { text: transcript }), { success: t('common.saved'), invalidate: [key], onSuccess: () => setTranscript('') });
   const process = useAction(() => apiPost<{ tasks_created: number; decisions: number }>(`/meetings/${meetingId}/process`, { create_tasks: createTasks, language: i18n.language }), { success: t('meetings.processed'), invalidate: [key, ['work', 'meetings', meetingId], ['work', 'tasks']] });
   const leave = useAction((sessionId: string) => apiPost(`/meetings/sessions/${sessionId}/leave`), { invalidate: [key] });
-  const sync = useAction((sessionId: string) => apiPost(`/meetings/sessions/${sessionId}/sync-transcript`), { success: t('common.saved'), invalidate: [key] });
   if (!m) return null;
   const name = (p: OfficeMeeting['participants'][number]) => (p.ai_employee_id ? o.aiName(p.ai_employee_id) : p.member_id ? o.memberName(p.member_id) : p.external_email) ?? '—';
 
@@ -82,7 +81,6 @@ export function MeetingOfficePanel({ meetingId }: { meetingId: string }) {
                 <span className="flex-1 truncate">{o.aiName(s.ai_employee_id)}</span>
                 <Badge tone={s.status === 'in_meeting' ? 'success' : s.status === 'not_supported' || s.status === 'failed' ? 'warning' : 'neutral'}>{t(`meetings.sessionStatus.${s.status}`)}</Badge>
                 {can('ai.control') && ['joining', 'in_meeting', 'presenting'].includes(s.status) && <Button size="icon-sm" variant="ghost" onClick={() => leave.mutate(s.id)} aria-label={t('meetings.leave')}><LogOut /></Button>}
-                {can('meetings.manage') && m.capabilities.transcript && <Button size="icon-sm" variant="ghost" onClick={() => sync.mutate(s.id)} aria-label={t('meetings.syncTranscript')}><RefreshCw /></Button>}
               </li>
             ))}
           </ul>

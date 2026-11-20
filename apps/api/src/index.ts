@@ -18,8 +18,12 @@ if (env.CRON_ENABLED) {
       });
     }, 60_000),
   );
-  // Meeting bots are billed per minute: make any bot past its reserved time leave, every minute.
-  timers.push(setInterval(() => void services.office.enforceBotDeadlines().catch((err: unknown) => app.log.error({ err }, 'bot_deadline_job_failed')), 60_000));
+  // The meeting agent costs money while in a room: it leaves when its reserved minutes are over (every minute).
+  timers.push(setInterval(() => void services.livekit.enforceAgentDeadlines().catch((err: unknown) => app.log.error({ err }, 'agent_deadline_job_failed')), 60_000));
+  // Queued meeting summaries (generated once ANTHROPIC_API_KEY exists), every 5 minutes.
+  timers.push(setInterval(() => void services.livekit.processSummaryQueue().catch((err: unknown) => app.log.error({ err }, 'summary_queue_job_failed')), 5 * 60_000));
+  // Meeting recordings past the company's retention period are deleted, hourly.
+  timers.push(setInterval(() => void services.livekit.purgeExpiredRecordings().catch((err: unknown) => app.log.error({ err }, 'recording_retention_job_failed')), 60 * 60_000));
   // Stuck-task reminders (blocked or overdue), hourly; each task at most once a day.
   timers.push(setInterval(() => void notifyStuckTasks(services.db, services.notifications).catch((err: unknown) => app.log.error({ err }, 'stuck_tasks_job_failed')), 60 * 60_000));
   // Retention & hygiene, hourly: expired meeting transcripts and abandoned uploads (> 3h in 'uploading').

@@ -58,19 +58,26 @@ const EnvSchema = z
     GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
     MICROSOFT_OAUTH_CLIENT_ID: z.string().optional(),
     MICROSOFT_OAUTH_CLIENT_SECRET: z.string().optional(),
-    MEETING_PROVIDER: z.enum(['nexus', 'recall']).default('nexus'),
-    RECALL_API_KEY: z.string().optional(),
-    RECALL_REGION: z.string().regex(/^[a-z0-9-]+$/).default('us-east-1'),
-    RECALL_WEBHOOK_SECRET: z.string().optional(),
     VOICE_PROVIDER: z.enum(['none', 'elevenlabs']).default('none'),
     ELEVENLABS_API_KEY: z.string().optional(),
     ELEVENLABS_DEFAULT_VOICE_ID: z.string().optional(),
-    // Internal video meetings are peer-to-peer. STUN only tells each browser its public address; an optional
-    // TURN relay (e.g. your own coturn) helps the few networks that block direct connections.
-    MEETING_STUN_URLS: csv.transform((v) => (v.length ? v : ['stun:stun.l.google.com:19302'])),
-    MEETING_TURN_URLS: csv,
-    MEETING_TURN_USERNAME: z.string().optional(),
-    MEETING_TURN_CREDENTIAL: z.string().optional(),
+
+    // Meetings run on LiveKit (LiveKit Cloud now; the same code works with a self-hosted LiveKit server).
+    LIVEKIT_URL: z.string().regex(/^wss?:\/\/.+/).optional(),
+    LIVEKIT_API_KEY: z.string().optional(),
+    LIVEKIT_API_SECRET: z.string().optional(),
+    // Name the meeting agent worker registers with (explicit dispatch).
+    LIVEKIT_AGENT_NAME: z.string().regex(/^[a-z0-9-]{1,64}$/).default('nexus-meeting-agent'),
+    // Shared secret the meeting agent uses to call the API's /internal/meeting-agent routes.
+    MEETING_AGENT_TOKEN: z.string().min(32).optional(),
+    // Model for in-meeting answers and post-meeting summaries (uses ANTHROPIC_API_KEY; queued until it exists).
+    MEETING_AI_MODEL: z.string().default('claude-sonnet-5-5'),
+    // Recordings: LiveKit Egress uploads to Supabase Storage through its S3-compatible endpoint.
+    RECORDING_S3_ENDPOINT: z.url().optional(),
+    RECORDING_S3_REGION: z.string().default('eu-central-1'),
+    RECORDING_S3_ACCESS_KEY_ID: z.string().optional(),
+    RECORDING_S3_SECRET_ACCESS_KEY: z.string().optional(),
+    RECORDING_BUCKET: z.string().default('meeting-recordings'),
 
     // Phone notifications for the NEXUS iOS app, sent straight to Apple (APNs). All four are needed to push.
     APNS_KEY_ID: z.string().optional(),
@@ -101,8 +108,9 @@ const EnvSchema = z
     if (env.EMAIL_PROVIDER === 'resend' && !env.RESEND_API_KEY) {
       ctx.addIssue({ code: 'custom', path: ['RESEND_API_KEY'], message: 'required when EMAIL_PROVIDER=resend' });
     }
-    if (env.MEETING_PROVIDER === 'recall' && !env.RECALL_API_KEY) {
-      ctx.addIssue({ code: 'custom', path: ['RECALL_API_KEY'], message: 'required when MEETING_PROVIDER=recall' });
+    const lk = [env.LIVEKIT_URL, env.LIVEKIT_API_KEY, env.LIVEKIT_API_SECRET].filter(Boolean).length;
+    if (lk > 0 && lk < 3) {
+      ctx.addIssue({ code: 'custom', path: ['LIVEKIT_URL'], message: 'LIVEKIT_URL, LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set together' });
     }
     if (env.VOICE_PROVIDER === 'elevenlabs' && !env.ELEVENLABS_API_KEY) {
       ctx.addIssue({ code: 'custom', path: ['ELEVENLABS_API_KEY'], message: 'required when VOICE_PROVIDER=elevenlabs' });
