@@ -22,7 +22,6 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { CommandPalette } from '@/components/command-palette';
-import { WhatsAppButton } from '@/components/whatsapp';
 import { LanguageToggle, Logo, ThemeToggle } from '@/components/common';
 import { CompanyLogo } from '@/components/company-logo';
 import { api, apiPost } from '@/lib/api';
@@ -262,7 +261,6 @@ export function AppLayout() {
         </main>
       </div>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-      <WhatsAppButton />
     </div>
   );
 }
